@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1093733495416",
+    "project_id": "macsapp-f2a0f",
+    "storage_bucket": "macsapp-f2a0f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1093733495416:android:81b481683704988aca738d",
+        "android_client_info": {
+          "package_name": "com.macsapp.macsapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1093733495416-rkt83ofh4go0aucv9c1oa3gefjrh99rn.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJkO23tdLiASNpXpcgB9rz6U3zp5C3G4Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1093733495416-rkt83ofh4go0aucv9c1oa3gefjrh99rn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
