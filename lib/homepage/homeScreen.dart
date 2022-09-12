@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firestore_search/firestore_search.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:macsapp/chats/chat.dart';
 import 'package:macsapp/login/services/googlesignin.dart';
 import 'package:macsapp/main.dart';
 import 'package:macsapp/profile.dart';
@@ -111,14 +112,18 @@ class homeScreenState extends State<homeScreen>{
                         _removefriend(snapshot.data.docs[index].id);
                       }
                       ),                      
-                      leading: Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50,),
+                      leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(100),child: 
+                      Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50,)),
                       onTap: () async{
                         Globalname = snapshot.data.docs[index]['name'];
                         Globalabout = snapshot.data.docs[index]['about'];
                         Globalimg = snapshot.data.docs[index]['img'];
-                        // Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => 
-                        // UsersList(name: snapshot.data.docs[index]['name'], about: snapshot.data.docs[index]['about'],
-                        // img: snapshot.data.docs[index]['img'],)));
+                        Globalid = snapshot.data.docs[index]['id'];
+
+                        Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => 
+                        chat(name: snapshot.data.docs[index]['name'], about: snapshot.data.docs[index]['about'],
+                        img: snapshot.data.docs[index]['img'],id: snapshot.data.docs[index]['id'], )));
                       }),
                     );
               }),
@@ -138,13 +143,19 @@ class homeScreenState extends State<homeScreen>{
           title: const Text("Do you want to remove this friend?", textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold)),
           actions: <Widget>[
-          FlatButton(  
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Colors.white
+             ),               
             child: const Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () {  
               Navigator.of(context).pop();  
             },  
           ),  
-          FlatButton(  
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Colors.white
+             ),            
             child: const Text('Remove',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () async { 
             await FirebaseFirestore.instance.collection(user!.email! + "friends").doc(docid).delete();
@@ -250,13 +261,19 @@ class _NavDrawerState extends State<NavDrawer> {
           title: const Text("Do you want to logout?", textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold)),
           actions: <Widget>[
-          FlatButton(  
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Colors.white
+             ),               
             child: const Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI')),  
             onPressed: () {  
               Navigator.of(context).pop();  
             },  
           ),  
-          FlatButton(  
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Colors.white
+             ),               
             child: const Text('Logout',style: TextStyle(fontFamily: 'BrandonLI')),  
             onPressed: () async { 
 
@@ -288,6 +305,7 @@ class _NavDrawerState extends State<NavDrawer> {
 String Globalname = " ";
 String Globalabout = " ";
 String Globalimg = " ";
+String Globalid = " ";
 
 //Users list............................................................................................
 class UsersList extends StatefulWidget {
@@ -376,7 +394,9 @@ class UsersListState extends State<UsersList>{
                           color: Colors.blueGrey,
                           fontSize: 15,
                         ),),
-                      leading: Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50,),
+                      leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(100),child: 
+                      Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50,),),
                       trailing: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         primary: Colors.blueGrey
@@ -499,11 +519,15 @@ class _SearchFeedState extends State<SearchFeed> {
                   children: [
                     Card(elevation: 15,
                     child: ListTile(
-                      leading: Image.network(
+                      leading:
+                      ClipRRect(
+                      borderRadius: BorderRadius.circular(100),
+                      child:
+                       Image.network(
                         '${data.img}',
                         width: 80,
                         height: 80,
-                      ),
+                      )),
                       trailing: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         primary: Colors.blueGrey

@@ -76,14 +76,13 @@ class RequestsState extends State<Requests>{
                           fontSize: 15,
                         ),),
                       leading: Image.network(snapshot.data.docs[index]['Requestimg'], width: 50, height: 50,),
-                      trailing: ElevatedButton(
+                      trailing: Row(children: [
+                      
+                      ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         primary: Colors.blueGrey
                       ),
-                      child: Text("Add", style: const TextStyle(fontFamily: 'BrandonBI',
-                          color: Colors.white,
-                          fontSize: 15,
-                        ),),
+                      child: Icon(Icons.check, color: Colors.white,),
                       onPressed: () async{
                       
                       try{
@@ -92,13 +91,15 @@ class RequestsState extends State<Requests>{
                         'about': widget.about,
                         'img': widget.img,
                         'email': user!.email!,
+                        'id': user!.email! + snapshot.data.docs[index]['Requestemail']
                       });
 
                       await FirebaseFirestore.instance.collection(user!.email! + "friends").doc(snapshot.data.docs[index]['Requestemail']).set({
                         'name': snapshot.data.docs[index]['Requestname'],
                         'about': snapshot.data.docs[index]['Requestabout'],
                         'img': snapshot.data.docs[index]['Requestimg'],
-                        'email': snapshot.data.docs[index]['Requestemail'],                        
+                        'email': snapshot.data.docs[index]['Requestemail'],   
+                        'id': user!.email! + snapshot.data.docs[index]['Requestemail']                     
                       });  
 
                       FirebaseFirestore.instance.collection(user!.email! + "request")
@@ -120,6 +121,37 @@ class RequestsState extends State<Requests>{
                                     textColor: Colors.white  
                                 );                       
                       }),
+
+                      SizedBox(width: 10,),
+
+                      ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        primary: Colors.white
+                      ),
+                      child: Icon(Icons.close, color: Colors.blueGrey,),
+                      onPressed: () async{
+                      
+                      try{
+                      FirebaseFirestore.instance.collection(user!.email! + "request")
+                      .doc(snapshot.data.docs[index]['Requestemail']).delete();
+                      } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white  
+                                );                        
+                      }
+                                    Fluttertoast.showToast(  
+                                    msg: 'Friend request rejected..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white  
+                                );                       
+                      })                      
+                      ],),
             ));
               })]);           
         }
