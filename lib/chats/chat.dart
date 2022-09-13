@@ -15,23 +15,28 @@ import 'package:http/http.dart' as http;
 
 
 class chat extends StatefulWidget {
-  final name;
-  final about; 
-  final img; 
+
   final id; 
-  chat({Key? key,this.name,this.about,this.img,this.id}) : super(key: key);
+  chat({Key? key,this.id}) : super(key: key);
   @override
-  _chatState createState() => _chatState();
+  chatState createState() => chatState();
 }
 
-class _chatState extends State<chat> {
+//popUp...........................................................................................
+
+enum Menu { itemDelete, itemClose}
+
+//.................................................................................................
+
+class chatState extends State<chat> {
   TextEditingController messageController =  TextEditingController();
   final collectionReference = FirebaseFirestore.instance;
   var outputFormat = DateFormat('hh:mm a');
+  var dateFormat = DateFormat(' yyyy-MM-dd - hh:mm a');
 
   int cat = 1;
-  bool isShowSticker = false;
   late String image;
+  bool isShowSticker = false;
   String datetime = DateTime.now().toString();
   
 
@@ -58,7 +63,14 @@ Future<String> uploadFile(_image) async {
                         'photo': imageURL,
                         'time': outputFormat.format(DateTime.now()),
                         'id': user!.email!,   
-                        'cat': 2                
+                        'reply': reply,
+                        'replyName': replyName,
+                        'replyMsg': replyMsg,
+                        'name': Globalname, 
+                        'cat': 2,   
+                        'cat1': category,      
+                        'isSelected': false,   
+                        'date': dateFormat.format(DateTime.now())    
                       });  
                      
                       } catch(e){
@@ -123,20 +135,116 @@ Future<String> uploadFile(_image) async {
 
     return Future.value(false);
   }
+
+selectedItem(String name) async{
+
+
+  String imgUrl = "";
+  if (name == "itemDelete") {
+    
+  Fluttertoast.showToast(  
+  msg: 'Deleting message may take a while...!',  
+  toastLength: Toast.LENGTH_LONG,  
+  gravity: ToastGravity.BOTTOM,  
+  backgroundColor: Colors.blueGrey,  
+  textColor: Colors.white);  
+
+    for (var i = 0 ; i <= growableList.length - 1 ; i++){
+       try{
+            await collectionReference.collection(widget.id).doc(growableList[i]).get()
+            .then((snapshot) {
+              setState(() {
+              imgUrl = snapshot.get('photo');                
+              });
+        });  
+        await FirebaseStorage.instance.refFromURL(imgUrl).delete(); 
+
+     } catch (e){
+          debugPrint("error");
+     } 
+
+      FirebaseFirestore.instance.collection(widget.id).doc(growableList[i]).delete();
+
+    } 
+    }else {
+      Navigator.of(context).pop();
+    }
+}
 //..........................................................................................
     return Scaffold(
-
+      floatingActionButton: Container(
+      height: 100.0,
+      width: 100.0,
+      padding: const EdgeInsets.only(bottom: 50.0),
+      child: FloatingActionButton(
+        child: Icon(Icons.keyboard_arrow_down, color: Colors.white,),
+        onPressed: (){
+        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+        },
+      )),
       appBar: AppBar(
+        actions: <Widget>[
+          // This button presents popup menu items.
+          PopupMenuButton<Menu>(
+              // Callback that sets the selected popup menu item.
+              onSelected: (Menu item) {              
+                selectedItem(item.name);
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
+                     PopupMenuItem<Menu>(
+                      value: Menu.itemDelete,
+                      child: Row(children: [
+                        Icon(Icons.delete, color: Colors.blueGrey,),
+                        Text("Delete message",
+                        style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold))
+                      ]),
+                    ),
+                    PopupMenuItem<Menu>(
+                      value: Menu.itemClose,
+                      child: Row(children: [
+                        Icon(Icons.close, color: Colors.blueGrey,),
+                        Text("Close",
+                        style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold))
+                      ]),
+                    ),
+                  ]),
+        ],     
         leading: IconButton(icon: Icon(Icons.arrow_back, color: Colors.white60,),
         onPressed: () => Navigator.of(context).pop(),
         ),
-        title: Row(children: [
-        ClipRRect(
+        title: StreamBuilder(
+        stream: FirebaseFirestore.instance.collection("Users").doc(Globalmail)
+        .snapshots(),
+        builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {  
+        if (!snapshot.hasData) {   
+        return Row(children: [
+        InkWell(
+        child:  ClipRRect(
          borderRadius: BorderRadius.circular(100),child: 
-        Image.network(widget.img, width: 40, height: 40, fit: BoxFit.fill,)),
+        Image.network("https://firebasestorage.googleapis.com/v0/b/macsapp-f2a0f.appspot.com/o/App%20file%2Fdefault%2Fdownload.png?alt=media&token=ae634acf-dc30-4228-a071-587d9007773e",
+        width: 40, height: 40, fit: BoxFit.fill,))
+        ),
+
         SizedBox(width: 10,),
-        Text(widget.name, textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70,fontWeight: FontWeight.bold))],),          
+
+        Text('name', textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70,fontWeight: FontWeight.bold))]);        
+        } else {
+        return
+        Row(children: [
+        InkWell(
+        onTap: () => Navigator.push(context, MaterialPageRoute(
+        builder: (context)=> PhotoView(url: snapshot.data['img'], date: snapshot.data['name']))),
+        child:  ClipRRect(
+         borderRadius: BorderRadius.circular(100),child: 
+        Image.network(snapshot.data['img'], width: 40, height: 40, fit: BoxFit.fill,))
+        ),
+        
+        SizedBox(width: 10,),
+
+        Text(snapshot.data['name'], textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70,fontWeight: FontWeight.bold))],);
+          }}),          
       ),
 
       backgroundColor: Colors.white,
@@ -169,7 +277,7 @@ Future<String> uploadFile(_image) async {
       bottomSheet: StreamBuilder(
       stream: FirebaseFirestore.instance.collection(widget.id).snapshots(),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-         if (!snapshot.hasData) {   
+         if (!snapshot.hasData) {  
         return Row(mainAxisAlignment: MainAxisAlignment.start,
         children: [
           IconButton(onPressed: (){
@@ -225,7 +333,55 @@ Future<String> uploadFile(_image) async {
 
       else{
         return 
-        
+        Column( mainAxisSize: MainAxisSize.min,
+        children: [ 
+        if(reply == true)...[
+                            SizedBox(
+                            width: 150,                            
+                            child: Container(
+                            margin: const EdgeInsets.all(5.0),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.blue, width: 2)
+                            ),    
+                              child: 
+                               category == 1 ?  
+                               Column(children: [
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[100],
+                                child: 
+                                Text(replyName, style: TextStyle(fontSize: 10,fontFamily: 'BrandonBI'),)),
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[50],
+                                child: 
+                                Image.asset("assets/sticker/" + replyMsg + ".gif", width: 30, height: 30,))])
+
+                                : category == 2 ?
+                                Column(children: [
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[100],     
+                                child:                             
+                                Text(replyName, style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[50],     
+                                child:  
+                                Image.network(replyMsg, width: 30, height: 30,))])
+
+                              : Column(children: [ 
+                              Container(width: 150,alignment: Alignment.center,
+                              color: Colors.blue[100],     
+                               child:                                                                 
+                              Text(replyName, style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI')),),
+                              Container(width: 150,alignment: Alignment.center,
+                              color: Colors.blue[50],     
+                              child:                                
+                              Text(replyMsg, style: TextStyle(fontSize: 15,fontFamily: 'BrandonLI'),)),
+                              ],)
+                            ),)
+
+        ] else...[
+
+        ],
+
         Row(mainAxisAlignment: MainAxisAlignment.start,
         children: [
           IconButton(onPressed: (){
@@ -297,12 +453,18 @@ Future<String> uploadFile(_image) async {
                  if (messageController.text.trim().isNotEmpty)
                  {
                  try{ 
-
                       await FirebaseFirestore.instance.collection(widget.id).add({
                         'msg': messageController.text.trim(),
                         'time': outputFormat.format(DateTime.now()),
-                        'id': user!.email!,   
-                        'cat': 3                
+                        'id': user!.email!,  
+                        'reply': reply,
+                        'replyName': replyName,
+                        'replyMsg': replyMsg,  
+                        'name': Globalname,                       
+                        'cat': 3,
+                        'cat1': category,
+                        'isSelected': false,
+                        'date': dateFormat.format(DateTime.now())                  
                       });  
                      
                       } catch(e){
@@ -318,6 +480,10 @@ Future<String> uploadFile(_image) async {
 
                 setState(() {
                   cat = 1;
+                  reply = false;
+                  replyMsg = "";
+                  replyName = "";  
+                
                 });  
                 } else {
                 
@@ -334,13 +500,18 @@ Future<String> uploadFile(_image) async {
 
                   setState(() {                    
                   isloading = false;
+                  reply = false;
+                  replyMsg = "";
+                  replyName = "";  
+                 
                   });
 
                 }         
           },
           icon: Icon(Icons.send, color: Colors.blueGrey,)),            
 
-        ]);
+        ])
+         ]);
     
       }})
     );
@@ -465,7 +636,14 @@ onSendMessage(String sticker) async {
                         'sticker': sticker,
                         'time': outputFormat.format(DateTime.now()),
                         'id': user!.email!,   
-                        'cat': 1                
+                        'reply': reply,
+                        'replyName': replyName,
+                        'replyMsg': replyMsg,  
+                        'name': Globalname,                       
+                        'cat': 1,
+                        'cat1': category,
+                        'isSelected': false,
+                        'date': dateFormat.format(DateTime.now())                  
                       });  
                      
                       } catch(e){
@@ -476,9 +654,21 @@ onSendMessage(String sticker) async {
                                     backgroundColor: Colors.blueGrey,  
                                     textColor: Colors.white); 
                                     }    
+                setState(() {
+                        reply = false;
+                        replyMsg = "";
+                        replyName = "";  
+                });
 }
 
 }
+
+//global.......................................................................................................
+String replyName = "";
+String replyMsg = "";
+int category = 0;
+bool reply = false;
+ScrollController scrollController = ScrollController();
 
 //CHAT1.........................................................................................................
 class chat1 extends StatefulWidget {
@@ -488,18 +678,74 @@ class chat1 extends StatefulWidget {
   _chat1State createState() => _chat1State();
 }
 
+  final growableList = <String>[];
+
 class _chat1State extends State<chat1> {
   TextEditingController messageController =  TextEditingController();
   final collectionReference = FirebaseFirestore.instance;
 
+  bool isSelect = false;
   late String image;
-
+  bool? value = false;
   User? user = FirebaseAuth.instance.currentUser;
+
 
   @override
   Widget build(BuildContext context) {
+
+//stickerview......................................................................................................
+   _sticker(String date, String name)  async{ 
+     await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color.fromARGB(223, 255, 254, 254),
+          title: Center(child: 
+          Image.asset("assets/sticker/" + name + ".gif", width: 130, height: 130,)
+          ),
+          content: Text(date, textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 15, color: Colors.blueGrey,fontWeight: FontWeight.bold)),
+          actions: <Widget>[
+          Center(child:
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Color.fromARGB(223, 255, 254, 254)
+             ),               
+            child: const Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            onPressed: () {  
+              Navigator.of(context).pop();  
+            },  
+          )),  
+          ],
+        ));
+  } 
+//stickerview......................................................................................................
+   _messageView(String date, String msg)  async{ 
+     await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color.fromARGB(223, 255, 254, 254),
+          title:  Text(msg, textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonBI', fontSize: 25, color: Colors.blueGrey,fontWeight: FontWeight.bold)),
+          content:  Text(date, textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI', fontSize: 15, color: Colors.blueGrey,fontWeight: FontWeight.bold)),          
+          actions: <Widget>[
+          Center(child:
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Color.fromARGB(223, 255, 254, 254)
+             ),               
+            child: const Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            onPressed: () {  
+              Navigator.of(context).pop();  
+            },  
+          )),  
+          ],
+        ));
+  } 
+
+//....................................................................................................................
     return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection(Globalid).orderBy("time").snapshots(),
+      stream: FirebaseFirestore.instance.collection(Globalid).orderBy("date").snapshots(),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
          if (!snapshot.hasData) {   
         return  Center(child: 
@@ -510,8 +756,9 @@ class _chat1State extends State<chat1> {
         }
 
       else{
-        return ListView(children: [
-                  
+        return ListView(
+        controller: scrollController,
+        children: [
         ListView.builder(
                   physics: const ScrollPhysics(),
                   padding: const EdgeInsets.all(5),
@@ -520,24 +767,193 @@ class _chat1State extends State<chat1> {
                   itemCount: snapshot.data.docs.length,        
                   itemBuilder: (BuildContext context, int index) {
 
-                  return Container(
+                  return GestureDetector(
+                
+                onHorizontalDragEnd: (DragEndDetails details) async{
+                  if (details.primaryVelocity! > 0) {
+
+                  if(snapshot.data.docs[index]["cat"] == 1){    
+                    setState(() {
+                      
+                        reply = true;
+                        replyMsg = snapshot.data.docs[index]["sticker"];
+                        replyName = snapshot.data.docs[index]["name"];   
+                        category = 1;                                       
+                    });                
+                        Fluttertoast.showToast(  
+                                    msg:"Replying to photo \n double tap on message to view.!",  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white); 
+
+                  } else if(snapshot.data.docs[index]["cat"] == 2){
+                    setState(() {
+                      
+                        reply = true;
+                        replyMsg = snapshot.data.docs[index]["photo"];
+                        replyName = snapshot.data.docs[index]["name"];  
+                        category = 2;                                        
+ 
+                    });
+                        Fluttertoast.showToast(  
+                                    msg:"Replying to sticker \n double tap on message to view.!",  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white);                     
+                  } else {
+                    setState(() {
+                      
+                        reply = true;
+                        replyMsg = snapshot.data.docs[index]["msg"];
+                        replyName = snapshot.data.docs[index]["name"];   
+                        category = 3;   
+                    });
+                        Fluttertoast.showToast(  
+                                    msg:"Replying to " + replyMsg.toString() + "\n double tap on message to view.!",  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white);                     
+                  }                 
+                  }
+                if (details.primaryVelocity! < 0) {
+
+                    setState(() {
+                        reply = false;
+                        replyMsg = "";
+                        replyName = "";     
+                    });
+                  }
+                  
+                  },
+                  
+                 child: InkWell(
+                  onLongPress: () async {
+                  if (snapshot.data.docs[index]["id"] == user!.email!){
+                    if(snapshot.data.docs[index]["isSelected"] == true){
+                     
+                     for (var i = 0 ; i <= growableList.length - 1 ; i++){
+                     await FirebaseFirestore.instance.collection(Globalid).doc(growableList[i]).update({
+                        'isSelected': false                
+                      });  
+                     }
+                     setState(() {                    
+                     growableList.clear();
+                       
+                     });
+
+                    }  
+                  }                 
+                  },                    
+                  onDoubleTap: () async{ 
+                  if (snapshot.data.docs[index]["id"] == user!.email!){
+
+                    if(snapshot.data.docs[index]["isSelected"] == true){
+
+                     await FirebaseFirestore.instance.collection(Globalid).doc(snapshot.data.docs[index].id).update({
+                        'isSelected': false                
+                      });  
+
+                     setState(() {                    
+                     growableList.remove(snapshot.data.docs[index].id);
+                       
+                     });
+
+                    } else {
+
+                     await FirebaseFirestore.instance.collection(Globalid).doc(snapshot.data.docs[index].id).update({
+                        'isSelected': true                
+                      });  
+
+                    setState(() {
+                      growableList.add(snapshot.data.docs[index].id);
+                    });                   
+                    
+                    }
+                    }
+                  },
+
+                  child: 
+                  Container(
+                    color: snapshot.data.docs[index]["isSelected"] == true ?
+                   Color.fromARGB(200, 96, 125, 139) : Colors.white,
                     padding: EdgeInsets.only(left: 14,right: 14,top: 10,bottom: 10),
                     child: Align(
                       alignment: (snapshot.data.docs[index]["id"] != user!.email! ? Alignment.topLeft : Alignment.topRight),
-                      child: Container(
+                      child: 
+                      Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           color: (snapshot.data.docs[index]["id"] != user!.email! ? Colors.grey.shade200 : Colors.blue[200]),
                         ),
                         padding: EdgeInsets.all(16),
-                        child: Column(children: [
+                        child: Column(children: [                       
+
+                          if(snapshot.data.docs[index]["reply"] == true)...[
+                            SizedBox(
+                            width: 150,                            
+                            child: Container(
+                            margin: const EdgeInsets.all(5.0),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.blue, width: 2)
+                            ),    
+                              child: 
+                               snapshot.data.docs[index]["cat1"] == 1 ?  
+                               Column(children: [
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[100],
+                                child: 
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(fontSize: 10,fontFamily: 'BrandonBI'),)),
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[50],
+                                child: 
+                                Image.asset("assets/sticker/" + snapshot.data.docs[index]["replyMsg"] + ".gif", width: 30, height: 30,))])
+
+                                : snapshot.data.docs[index]["cat1"] == 2 ?
+                                Column(children: [
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[100],
+                                child: 
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[50],
+                                child: 
+                                Image.network(snapshot.data.docs[index]["replyMsg"], width: 30, height: 30,))])
+
+                              : Column(children: [  
+                              Container(width: 150,alignment: Alignment.center,
+                              color: Colors.blue[100],
+                              child:                               
+                              Text(snapshot.data.docs[index]["replyName"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
+                              Container(width: 150,alignment: Alignment.center,
+                              color: Colors.blue[50],
+                              child: 
+                              Text(snapshot.data.docs[index]["replyMsg"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonLI'),)),
+                              ],)
+                            ),)
+                          ]else...[
+                            Text("")
+                          ],
+
                         snapshot.data.docs[index]["cat"] == 1 ? 
-                        Image.asset("assets/sticker/" + snapshot.data.docs[index]["sticker"] + ".gif", width: 80, height: 80,)
+                        InkWell(
+                        onTap: () => _sticker(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["sticker"]),
+                        child:                         
+                        Image.asset("assets/sticker/" + snapshot.data.docs[index]["sticker"] + ".gif", width: 80, height: 80,))
 
                         : snapshot.data.docs[index]["cat"] == 2 ?
-                        Image.network(snapshot.data.docs[index]["photo"], width: 150, height: 150,)
+                        InkWell(
+                        onTap: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (context)=> PhotoView(url: snapshot.data.docs[index]["photo"], date: snapshot.data.docs[index]["date"]))),
+                        child: 
+                        Image.network(snapshot.data.docs[index]["photo"], width: 150, height: 150,),)
                         
-                        : Text(snapshot.data.docs[index]["msg"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),),
+                        : InkWell(
+                        onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["msg"]),
+                        child:                          
+                        Text(snapshot.data.docs[index]["msg"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
                         
                         SizedBox(width: 80, child:
                         Row(mainAxisAlignment: MainAxisAlignment.end,
@@ -547,7 +963,7 @@ class _chat1State extends State<chat1> {
                         ],)
                       ),
                     ),
-                  );
+                  )));
               },),
 
               SizedBox(height: 50,)
@@ -557,5 +973,55 @@ class _chat1State extends State<chat1> {
       }});
 
   }
+  
 }
 
+//PhotoView............................................................................................
+class PhotoView extends StatefulWidget {
+
+  final date;
+  final url; 
+  PhotoView({Key? key,this.date,this.url}) : super(key: key);
+
+  @override
+  PhotoViewState createState() => PhotoViewState();
+}
+
+class PhotoViewState extends State<PhotoView>{
+  @override
+  Widget build(BuildContext context) {
+  return Scaffold(
+  appBar: AppBar(
+        backgroundColor: Colors.black,    
+        leading: IconButton(
+              icon:  Icon(
+                Icons.arrow_back,
+                color: Colors.white, // Change Custom Drawer Icon Color
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },),
+        title:  Text(
+          widget.date,
+          style: TextStyle(
+            color: Colors.white,fontFamily: 'BrandonBIBI',
+            fontSize: 18,
+          ),
+        ),
+        elevation: 5.0,
+        centerTitle: true,
+      ),
+
+      backgroundColor: Colors.black,
+
+      body: Container(
+        color: Colors.black,
+        child: Center(child:
+        Image.network(widget.url)),
+        ),
+  ); 
+      
+  }
+
+
+}

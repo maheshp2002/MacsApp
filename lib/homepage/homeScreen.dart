@@ -18,6 +18,7 @@ class homeScreen extends StatefulWidget {
 
 class homeScreenState extends State<homeScreen>{
   User? user = FirebaseAuth.instance.currentUser;
+  final collectionReference = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +34,7 @@ class homeScreenState extends State<homeScreen>{
         else{
         return FloatingActionButton(
         backgroundColor: Colors.blueGrey,
-        onPressed: () {
+        onPressed: () {          
                         Globalname = snapshot.data['name'];
                         Globalabout = snapshot.data['about'];
                         Globalimg = snapshot.data['img'];
@@ -84,7 +85,6 @@ class homeScreenState extends State<homeScreen>{
         }
 
         else{
-        
            return ListView(
            children: [
           
@@ -96,36 +96,102 @@ class homeScreenState extends State<homeScreen>{
                   itemCount: snapshot.data.docs.length,        
                   itemBuilder: (BuildContext context, int index) {
 
-                    return Card(elevation: 15,child:
-                    ListTile(
-                      title: Text(snapshot.data.docs[index]['name'],style: const TextStyle(fontFamily: 'BrandonLI',
-                          color: Colors.blueGrey,
-                          fontSize: 20,
-                        ),),
-                      subtitle: Text(snapshot.data.docs[index]['about'],style: const TextStyle(fontFamily: 'BrandonLI',
-                          color: Colors.blueGrey,
-                          fontSize: 15,
-                        ),),  
-                      trailing: IconButton(
-                      icon: Icon(Icons.delete_sweep, color: Colors.blueGrey, size: 30,),
-                      onPressed: () {
+                    return 
+                    Card(elevation: 15,
+                    
+                    child: InkWell(
+                      onLongPress: () async{
+                        try{
+                        await FirebaseFirestore.instance.collection(snapshot.data.docs[index]['id']).where('id', isEqualTo: user!.email!)
+                        .get().then((snapshot) {
+                          snapshot.docs.forEach((documentSnapshot) async {
+                            //There must be a field in document snapshot that represents this doc Id
+                            String thisDocId = documentSnapshot['docId'];
+                          
+                          FirebaseFirestore.instance.collection("chats").doc(thisDocId).delete();
+                        });
+                        }
+                        );
+                        }catch(e){
+                          Fluttertoast.showToast(  
+                          msg: 'error occured..!',  
+                          toastLength: Toast.LENGTH_LONG,  
+                          gravity: ToastGravity.BOTTOM,  
+                          backgroundColor: Colors.blueGrey,  
+                          textColor: Colors.white  
+                          );                            
+                        }
                         _removefriend(snapshot.data.docs[index].id);
-                      }
-                      ),                      
-                      leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(100),child: 
-                      Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50, fit: BoxFit.fill,)),
+                      },
                       onTap: () async{
-                        Globalname = snapshot.data.docs[index]['name'];
-                        Globalabout = snapshot.data.docs[index]['about'];
-                        Globalimg = snapshot.data.docs[index]['img'];
+                        await collectionReference.collection("Users").doc(snapshot.data.docs[index]['email']).get()
+                        .then((snapshot) {
+                          setState(() {
+                          Globalname = snapshot.get('name');                
+                          });
+                        });
+
+                        Globalmail = snapshot.data.docs[index]['email'];
                         Globalid = snapshot.data.docs[index]['id'];
 
                         Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => 
-                        chat(name: snapshot.data.docs[index]['name'], about: snapshot.data.docs[index]['about'],
-                        img: snapshot.data.docs[index]['img'],id: snapshot.data.docs[index]['id'], )));
-                      }),
-                    );
+                        chat(id: snapshot.data.docs[index]['id'],)));
+                      },                       
+                    child: StreamBuilder(
+                    stream: FirebaseFirestore.instance.collection("Users").doc(snapshot.data.docs[index]['email'])
+                    .snapshots(),
+                    builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) { 
+                    if (!snapshot.hasData) {   
+                    return 
+                    ListTile(
+                      title: Text('name',style: const TextStyle(fontFamily: 'BrandonLI',
+                          color: Colors.blueGrey,
+                          fontSize: 20,
+                        ),),
+                      subtitle: Text('about',style: const TextStyle(fontFamily: 'BrandonLI',
+                          color: Colors.blueGrey,
+                          fontSize: 15,
+                        ),),                       
+                      leading: InkWell(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (context)=> PhotoView(url: snapshot.data['img'], date: snapshot.data['name']))),
+                      child:  
+
+                      ClipRRect(
+                      borderRadius: BorderRadius.circular(100),child: 
+                      Image.network('https://firebasestorage.googleapis.com/v0/b/macsapp-f2a0f.appspot.com/o/App%20file%2Fdefault%2Fdownload.png?alt=media&token=ae634acf-dc30-4228-a071-587d9007773e',
+                       width: 50, height: 50, fit: BoxFit.fill,))),
+
+                      );                      
+                    } else {   
+                    return 
+                    ListTile(
+                      title: Text(snapshot.data['name'],style: const TextStyle(fontFamily: 'BrandonLI',
+                          color: Colors.blueGrey,
+                          fontSize: 20,
+                        ),),
+                      subtitle: Text(snapshot.data['about'],style: const TextStyle(fontFamily: 'BrandonLI',
+                          color: Colors.blueGrey,
+                          fontSize: 15,
+                        ),),  
+                      // trailing: IconButton(
+                      // icon: Icon(Icons.delete_sweep, color: Colors.blueGrey, size: 30,),
+                      // onPressed: () {
+                      //   // _removefriend(snapshot.data.docs[index].id);
+                      // }
+                      // ),                      
+                      leading: InkWell(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                      builder: (context)=> PhotoView(url: snapshot.data['img'], date: snapshot.data['name']))),
+                      child:  
+
+                      ClipRRect(
+                      borderRadius: BorderRadius.circular(100),child: 
+                      Image.network(snapshot.data['img'], width: 50, height: 50, fit: BoxFit.fill,))),
+
+                      );
+                  }}),
+                    ));
               }),
               
               ]);       
@@ -306,6 +372,7 @@ String Globalname = " ";
 String Globalabout = " ";
 String Globalimg = " ";
 String Globalid = " ";
+String Globalmail= " ";
 
 //Users list............................................................................................
 class UsersList extends StatefulWidget {
@@ -383,7 +450,8 @@ class UsersListState extends State<UsersList>{
                   itemCount: snapshot.data.docs.length,        
                   itemBuilder: (BuildContext context, int index) {
 
-                    return  Card(elevation: 15,
+                    return  
+                    Card(elevation: 15,
                     child:
                     ListTile(
                       title: Text(snapshot.data.docs[index]['name'],style: const TextStyle(fontFamily: 'BrandonLI',

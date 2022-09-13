@@ -33,7 +33,7 @@ class Splash extends StatefulWidget {
            Container(
 
         child: //Icon(Icons.radio, size: 250, color: Colors.white,),
-        Image.asset('assets/fm1.png', width:300,height:300),
+        Image.asset('assets/logo.png', width:150,height:150),
         ),
            const Padding(
              padding: EdgeInsets.only(top: 1),

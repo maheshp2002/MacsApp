@@ -44,7 +44,7 @@ Future<String> uploadFile(_image) async {
               String imageURL = await uploadFile(_image);
 
 
-              await FirebaseFirestore.instance.collection("Users").doc(user!.email!).set({
+              await FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
                 'name': unameController.text.trim(),
                 'about': aboutController.text.trim(),
                 'img': imageURL
