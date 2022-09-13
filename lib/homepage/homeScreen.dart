@@ -114,7 +114,7 @@ class homeScreenState extends State<homeScreen>{
                       ),                      
                       leading: ClipRRect(
                       borderRadius: BorderRadius.circular(100),child: 
-                      Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50,)),
+                      Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50, fit: BoxFit.fill,)),
                       onTap: () async{
                         Globalname = snapshot.data.docs[index]['name'];
                         Globalabout = snapshot.data.docs[index]['about'];
@@ -145,7 +145,7 @@ class homeScreenState extends State<homeScreen>{
           actions: <Widget>[
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Colors.white
+              primary: Color.fromARGB(223, 255, 254, 254)
              ),               
             child: const Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () {  
@@ -154,7 +154,7 @@ class homeScreenState extends State<homeScreen>{
           ),  
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Colors.white
+              primary: Color.fromARGB(223, 255, 254, 254)
              ),            
             child: const Text('Remove',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () async { 
@@ -263,18 +263,18 @@ class _NavDrawerState extends State<NavDrawer> {
           actions: <Widget>[
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Colors.white
+              primary: Color.fromARGB(223, 255, 254, 254)
              ),               
-            child: const Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI')),  
+            child: const Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () {  
               Navigator.of(context).pop();  
             },  
           ),  
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Colors.white
+              primary: Color.fromARGB(223, 255, 254, 254)
              ),               
-            child: const Text('Logout',style: TextStyle(fontFamily: 'BrandonLI')),  
+            child: const Text('Logout',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () async { 
 
             FirebaseService service = new FirebaseService();
@@ -396,7 +396,7 @@ class UsersListState extends State<UsersList>{
                         ),),
                       leading: ClipRRect(
                       borderRadius: BorderRadius.circular(100),child: 
-                      Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50,),),
+                      Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50, fit: BoxFit.fill,),),
                       trailing: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         primary: Colors.blueGrey
@@ -527,6 +527,7 @@ class _SearchFeedState extends State<SearchFeed> {
                         '${data.img}',
                         width: 80,
                         height: 80,
+                        fit: BoxFit.fill,
                       )),
                       trailing: ElevatedButton(
                       style: ElevatedButton.styleFrom(

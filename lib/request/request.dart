@@ -76,8 +76,9 @@ class RequestsState extends State<Requests>{
                           fontSize: 15,
                         ),),
                       leading: Image.network(snapshot.data.docs[index]['Requestimg'], width: 50, height: 50,),
-                      trailing: Row(children: [
-                      
+                      trailing: Expanded(child: 
+                      SizedBox(width: 150, child:
+                      Row(children: [                     
                       ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         primary: Colors.blueGrey
@@ -152,7 +153,7 @@ class RequestsState extends State<Requests>{
                                 );                       
                       })                      
                       ],),
-            ));
+            )),),);
               })]);           
         }
       })    
