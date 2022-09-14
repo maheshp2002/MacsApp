@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firestore_search/firestore_search.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -101,27 +102,8 @@ class homeScreenState extends State<homeScreen>{
                     
                     child: InkWell(
                       onLongPress: () async{
-                        try{
-                        await FirebaseFirestore.instance.collection(snapshot.data.docs[index]['id']).where('id', isEqualTo: user!.email!)
-                        .get().then((snapshot) {
-                          snapshot.docs.forEach((documentSnapshot) async {
-                            //There must be a field in document snapshot that represents this doc Id
-                            String thisDocId = documentSnapshot['docId'];
-                          
-                          FirebaseFirestore.instance.collection("chats").doc(thisDocId).delete();
-                        });
-                        }
-                        );
-                        }catch(e){
-                          Fluttertoast.showToast(  
-                          msg: 'error occured..!',  
-                          toastLength: Toast.LENGTH_LONG,  
-                          gravity: ToastGravity.BOTTOM,  
-                          backgroundColor: Colors.blueGrey,  
-                          textColor: Colors.white  
-                          );                            
-                        }
-                        _removefriend(snapshot.data.docs[index].id);
+
+                        _removefriend(snapshot.data.docs[index].id, snapshot.data.docs[index]['id']);
                       },
                       onTap: () async{
                         await collectionReference.collection("Users").doc(snapshot.data.docs[index]['email']).get()
@@ -201,7 +183,7 @@ class homeScreenState extends State<homeScreen>{
   }
 
 //remove friend......................................................................................................
-   _removefriend (String docid)  async{ 
+   _removefriend (String docid, String dltDocid)  async{ 
      await showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -224,6 +206,41 @@ class homeScreenState extends State<homeScreen>{
              ),            
             child: const Text('Remove',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () async { 
+              String imgUrl = "";
+                        try{
+                        await FirebaseFirestore.instance.collection(dltDocid).where('id', isEqualTo: user!.email!)
+                        .get().then((snapshot) {
+
+                          snapshot.docs.forEach((documentSnapshot) async {
+                            String thisDocId = documentSnapshot.id;
+
+                            try{
+                                  await collectionReference.collection(dltDocid).doc(thisDocId).get()
+                                  .then((snapshot) {
+                                    setState(() {
+                                    imgUrl = snapshot.get('photo');                
+                                    });
+                              });  
+                              await FirebaseStorage.instance.refFromURL(imgUrl).delete(); 
+
+                          } catch (e){
+                                debugPrint("error");
+                          } 
+
+                         FirebaseFirestore.instance.collection(dltDocid).doc(thisDocId).delete();
+
+                        });
+                        }
+                        );
+                        }catch(e){
+                          Fluttertoast.showToast(  
+                          msg: 'error occured..!',  
+                          toastLength: Toast.LENGTH_LONG,  
+                          gravity: ToastGravity.BOTTOM,  
+                          backgroundColor: Colors.blueGrey,  
+                          textColor: Colors.white  
+                          );                            
+                        }              
             await FirebaseFirestore.instance.collection(user!.email! + "friends").doc(docid).delete();
             Navigator.of(context).pop();  
             Fluttertoast.showToast(  

@@ -24,7 +24,7 @@ class chat extends StatefulWidget {
 
 //popUp...........................................................................................
 
-enum Menu { itemDelete, itemClose}
+enum Menu { itemDelete, itemClearMsg, itemClose}
 
 //.................................................................................................
 
@@ -37,7 +37,6 @@ class chatState extends State<chat> {
   int cat = 1;
   late String image;
   bool isShowSticker = false;
-  String datetime = DateTime.now().toString();
   
 
   User? user = FirebaseAuth.instance.currentUser;
@@ -62,6 +61,7 @@ Future<String> uploadFile(_image) async {
                       await FirebaseFirestore.instance.collection(widget.id).add({
                         'photo': imageURL,
                         'time': outputFormat.format(DateTime.now()),
+                        'sortTime': DateTime.now().toString(),
                         'id': user!.email!,   
                         'reply': reply,
                         'replyName': replyName,
@@ -166,9 +166,87 @@ selectedItem(String name) async{
       FirebaseFirestore.instance.collection(widget.id).doc(growableList[i]).delete();
 
     } 
+        
     }else {
       Navigator.of(context).pop();
     }
+}
+ClearMessage() async{
+     await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color.fromARGB(223, 255, 254, 254),
+          title: const Text("Do you want to delete all your messages?", textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonBI', color: Colors.blueGrey,fontWeight: FontWeight.bold)),
+          
+          content: const Text("This will delete all the messages you sent permenantly for both users.", textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold)),                    
+          
+          actions: <Widget>[
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Color.fromARGB(223, 255, 254, 254)
+             ),               
+            child: const Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            onPressed: () {  
+              Navigator.of(context).pop();  
+            },  
+          ),  
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Color.fromARGB(223, 255, 254, 254)
+             ),               
+            child: const Text('Delete',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            onPressed: () async { 
+              String imgUrl = "";
+                        try{
+                        await FirebaseFirestore.instance.collection(Globalid).where('id', isEqualTo: user!.email!)
+                        .get().then((snapshot) {
+
+                          snapshot.docs.forEach((documentSnapshot) async {
+                            String thisDocId = documentSnapshot.id;
+
+                            try{
+                                  await collectionReference.collection(Globalid).doc(thisDocId).get()
+                                  .then((snapshot) {
+                                    setState(() {
+                                    imgUrl = snapshot.get('photo');                
+                                    });
+                              });  
+                              await FirebaseStorage.instance.refFromURL(imgUrl).delete(); 
+
+                          } catch (e){
+                                debugPrint("error");
+                          } 
+
+                         FirebaseFirestore.instance.collection(Globalid).doc(thisDocId).delete();
+
+                        });
+                        }
+                        );
+                        }catch(e){
+                          Fluttertoast.showToast(  
+                          msg: 'error occured..!',  
+                          toastLength: Toast.LENGTH_LONG,  
+                          gravity: ToastGravity.BOTTOM,  
+                          backgroundColor: Colors.blueGrey,  
+                          textColor: Colors.white  
+                          );                            
+                        }   
+            Navigator.of(context).pop();  
+
+            Fluttertoast.showToast(  
+            msg: 'Deleting messages may take a while..!',  
+            toastLength: Toast.LENGTH_LONG,  
+            gravity: ToastGravity.BOTTOM,  
+            backgroundColor: Colors.blueGrey,  
+            textColor: Colors.white  
+            );  
+            }, 
+            ),
+
+          ],
+        ));  
 }
 //..........................................................................................
     return Scaffold(
@@ -187,9 +265,24 @@ selectedItem(String name) async{
           // This button presents popup menu items.
           PopupMenuButton<Menu>(
               // Callback that sets the selected popup menu item.
-              onSelected: (Menu item) {              
+              onSelected: (Menu item) {   
+
+              if (item.name == "itemClearMsg"){
+              Fluttertoast.showToast(  
+              msg: 'This will delete all the message you sent for both users...!',  
+              toastLength: Toast.LENGTH_LONG,  
+              gravity: ToastGravity.BOTTOM,  
+              backgroundColor: Colors.blueGrey,  
+              textColor: Colors.white);        
+
+              ClearMessage();
+
+              }else {      
+
                 selectedItem(item.name);
+              }
               },
+
               itemBuilder: (BuildContext context) => <PopupMenuEntry<Menu>>[
                      PopupMenuItem<Menu>(
                       value: Menu.itemDelete,
@@ -199,6 +292,14 @@ selectedItem(String name) async{
                         style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold))
                       ]),
                     ),
+                     PopupMenuItem<Menu>(
+                      value: Menu.itemClearMsg,
+                      child: Row(children: [
+                        Icon(Icons.delete_sweep, color: Colors.blueGrey,),
+                        Text("Clear all message",
+                        style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold))
+                      ]),
+                    ),                    
                     PopupMenuItem<Menu>(
                       value: Menu.itemClose,
                       child: Row(children: [
@@ -456,6 +557,7 @@ selectedItem(String name) async{
                       await FirebaseFirestore.instance.collection(widget.id).add({
                         'msg': messageController.text.trim(),
                         'time': outputFormat.format(DateTime.now()),
+                        'sortTime': DateTime.now().toString(),
                         'id': user!.email!,  
                         'reply': reply,
                         'replyName': replyName,
@@ -635,6 +737,7 @@ onSendMessage(String sticker) async {
                       await FirebaseFirestore.instance.collection(widget.id).add({
                         'sticker': sticker,
                         'time': outputFormat.format(DateTime.now()),
+                        'sortTime': DateTime.now().toString(),
                         'id': user!.email!,   
                         'reply': reply,
                         'replyName': replyName,
@@ -745,7 +848,7 @@ class _chat1State extends State<chat1> {
 
 //....................................................................................................................
     return StreamBuilder(
-      stream: FirebaseFirestore.instance.collection(Globalid).orderBy("date").snapshots(),
+      stream: FirebaseFirestore.instance.collection(Globalid).orderBy("sortTime").snapshots(),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
          if (!snapshot.hasData) {   
         return  Center(child: 
