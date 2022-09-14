@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -28,8 +29,10 @@ enum Menu { itemDelete, itemClearMsg, itemClose}
 
 //.................................................................................................
 
+
 class chatState extends State<chat> {
   TextEditingController messageController =  TextEditingController();
+  
   final collectionReference = FirebaseFirestore.instance;
   var outputFormat = DateFormat('hh:mm a');
   var dateFormat = DateFormat(' yyyy-MM-dd - hh:mm a');
@@ -37,9 +40,57 @@ class chatState extends State<chat> {
   int cat = 1;
   late String image;
   bool isShowSticker = false;
+  bool _show = false;
+  
   
 
   User? user = FirebaseAuth.instance.currentUser;
+//..............................................................................................................
+
+  @override
+  void initState() {
+    super.initState();
+    handleScroll();
+    print("################################################");
+  }  
+
+  @override
+  void dispose() {
+    scrollController.removeListener(() {});
+    super.dispose();
+  }
+
+//Show/hide floating button..........................................................................................
+  
+  void showFloationButton() {
+    setState(() {
+      _show = true;
+    });
+  }
+
+  void hideFloationButton() {
+    setState(() {
+      _show = false;
+    });
+  }
+
+//Scroll Controller..........................................................................................
+  
+  void handleScroll() async {
+    scrollController.addListener(() {
+      if (scrollController.position.userScrollDirection ==
+          ScrollDirection.reverse) {
+          showFloationButton();
+          
+      }
+      if (scrollController.position.userScrollDirection ==
+          ScrollDirection.forward) {
+          hideFloationButton();
+      }
+    });
+  }
+
+
 //..........................................................................................
 Future<String> uploadFile(_image) async {
 
@@ -91,7 +142,7 @@ Future<String> uploadFile(_image) async {
 // Image Picker
   File _image = File(''); // Used only if you need a single picture
   bool isloading = false;
-//..........................................................................................
+
 
   @override
   Widget build(BuildContext context) {
@@ -250,7 +301,9 @@ ClearMessage() async{
 }
 //..........................................................................................
     return Scaffold(
-      floatingActionButton: Container(
+      floatingActionButton:  Visibility(
+      visible: _show,
+      child:Container(
       height: 100.0,
       width: 100.0,
       padding: const EdgeInsets.only(bottom: 50.0),
@@ -258,8 +311,11 @@ ClearMessage() async{
         child: Icon(Icons.keyboard_arrow_down, color: Colors.white,),
         onPressed: (){
         scrollController.jumpTo(scrollController.position.maxScrollExtent);
+        setState(() {
+          _show = false;
+        });
         },
-      )),
+      ))),
       appBar: AppBar(
         actions: <Widget>[
           // This button presents popup menu items.
@@ -773,6 +829,7 @@ int category = 0;
 bool reply = false;
 ScrollController scrollController = ScrollController();
 
+
 //CHAT1.........................................................................................................
 class chat1 extends StatefulWidget {
   chat1({Key? key}) : super(key: key);
@@ -787,10 +844,12 @@ class _chat1State extends State<chat1> {
   TextEditingController messageController =  TextEditingController();
   final collectionReference = FirebaseFirestore.instance;
 
+
   bool isSelect = false;
   late String image;
   bool? value = false;
   User? user = FirebaseAuth.instance.currentUser;
+
 
 
   @override
