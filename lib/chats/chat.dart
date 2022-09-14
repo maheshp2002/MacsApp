@@ -1,7 +1,10 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/rendering.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -10,9 +13,9 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:macsapp/homepage/homeScreen.dart';
-import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:http/http.dart' as http;
+import 'package:open_file/open_file.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 
 class chat extends StatefulWidget {
@@ -36,6 +39,8 @@ class chatState extends State<chat> {
   final collectionReference = FirebaseFirestore.instance;
   var outputFormat = DateFormat('hh:mm a');
   var dateFormat = DateFormat(' yyyy-MM-dd - hh:mm a');
+  PlatformFile? pickfile;
+  bool isBottomSheet = false;
 
   int cat = 1;
   late String image;
@@ -51,7 +56,6 @@ class chatState extends State<chat> {
   void initState() {
     super.initState();
     handleScroll();
-    print("################################################");
   }  
 
   @override
@@ -111,10 +115,12 @@ Future<String> uploadFile(_image) async {
                   try{
                       await FirebaseFirestore.instance.collection(widget.id).add({
                         'photo': imageURL,
+                        'photoname': photoname,
+                        'isImage': isImage,
                         'time': outputFormat.format(DateTime.now()),
                         'sortTime': DateTime.now().toString(),
                         'id': user!.email!,   
-                        'reply': reply,
+                        'reply': reply.value,
                         'replyName': replyName,
                         'replyMsg': replyMsg,
                         'name': Globalname, 
@@ -134,6 +140,8 @@ Future<String> uploadFile(_image) async {
                                     }   
                 setState(() {
                   cat = 1;
+                  isImage = true;
+                  reply = ValueNotifier<bool>(false);
                 }); 
                     
 }
@@ -142,10 +150,6 @@ Future<String> uploadFile(_image) async {
 // Image Picker
   File _image = File(''); // Used only if you need a single picture
   bool isloading = false;
-
-
-  @override
-  Widget build(BuildContext context) {
 
 //........................................................................................
 
@@ -167,6 +171,8 @@ Future<String> uploadFile(_image) async {
       if (pickedFile != null) {
         //_images.add(File(pickedFile.path));
         _image= File(pickedFile.path); // Use if you only need a single picture
+        photoname = (pickedFile.path.split('/').last);
+
       } else {
         debugPrint('No image selected.');
       }
@@ -174,6 +180,24 @@ Future<String> uploadFile(_image) async {
   }
 
  //..........................................................................................
+
+  @override
+  Widget build(BuildContext context) {
+
+
+// selectFile() async {
+//   final result = await FilePicker.platform.pickFiles(allowMultiple: false);
+//   if(result == null) return;
+
+//   setState(() {
+//     pickfile = result.files.first;
+//    _image = File(pickfile!.path!);
+//     photoname = pickfile!.name;
+//   });
+  
+
+// }
+
   Future<bool> onBackPress() {
     if (isShowSticker) {
       setState(() {
@@ -304,9 +328,9 @@ ClearMessage() async{
       floatingActionButton:  Visibility(
       visible: _show,
       child:Container(
-      height: 100.0,
-      width: 100.0,
-      padding: const EdgeInsets.only(bottom: 50.0),
+      height: 50.0,
+      width: 50.0,
+      //padding: const EdgeInsets.only(bottom: 50.0),
       child: FloatingActionButton(
         child: Icon(Icons.keyboard_arrow_down, color: Colors.white,),
         onPressed: (){
@@ -431,7 +455,7 @@ ClearMessage() async{
         ),
       ),
 
-      bottomSheet: StreamBuilder(
+      bottomNavigationBar: StreamBuilder(
       stream: FirebaseFirestore.instance.collection(widget.id).snapshots(),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
          if (!snapshot.hasData) {  
@@ -447,16 +471,17 @@ ClearMessage() async{
           IconButton(onPressed: (){
 
           }, 
-          icon: cat != 2 ? Icon(CupertinoIcons.photo, color: Colors.blueGrey,)
-          : isloading == false ?
-          ClipRRect( 
-            child: Image.file(
-              _image,
-              width: 30,
-              height: 30,
-              fit: BoxFit.fill
-              ),)
-          : CircularProgressIndicator(color: Colors.blueGrey,)
+          icon: //cat != 2 ? 
+          Icon(FontAwesomeIcons.upload, color: Colors.blueGrey,)
+          // : isloading == false ?
+          // ClipRRect( 
+          //   child: Image.file(
+          //     _image,
+          //     width: 30,
+          //     height: 30,
+          //     fit: BoxFit.fill
+          //     ),)
+          // : CircularProgressIndicator(color: Colors.blueGrey,)
           ),
 
           SizedBox(width: 5,),
@@ -492,10 +517,15 @@ ClearMessage() async{
         return 
         Column( mainAxisSize: MainAxisSize.min,
         children: [ 
-        if(reply == true)...[
-                            SizedBox(
-                            width: 150,                            
-                            child: Container(
+        ValueListenableBuilder(
+        valueListenable: reply,
+        builder: (context, value, widget) {
+
+        if(value == true){
+                     return SizedBox(
+                            width: 200,                            
+                            child: 
+                            Container(
                             margin: const EdgeInsets.all(5.0),
                             decoration: BoxDecoration(
                               border: Border.all(color: Colors.blue, width: 2)
@@ -503,44 +533,96 @@ ClearMessage() async{
                               child: 
                                category == 1 ?  
                                Column(children: [
-                                Container(width: 150,alignment: Alignment.center,
+                                Container(width: 200,alignment: Alignment.center,
                                 color: Colors.blue[100],
-                                child: 
+                                child: Stack(
+                                children: [ 
+                                Align(alignment: Alignment.center,child:
                                 Text(replyName, style: TextStyle(fontSize: 10,fontFamily: 'BrandonBI'),)),
-                                Container(width: 150,alignment: Alignment.center,
+                                Align(alignment: Alignment.centerRight,
+                                child: Container(width: 20, height: 20,
+                                child: FloatingActionButton(
+                                backgroundColor: Color.fromARGB(200, 255, 255, 255),
+                                onPressed: (){
+                                  setState(() {
+                                      reply = ValueNotifier<bool>(false);
+                                      replyMsg = "";
+                                      replyName = "";     
+                                  });
+                                },
+                                child: Icon(Icons.close, color: Colors.blueGrey,size: 15,),
+                                )))
+                                ])),
+                                Container(width: 200,alignment: Alignment.center,
                                 color: Colors.blue[50],
                                 child: 
                                 Image.asset("assets/sticker/" + replyMsg + ".gif", width: 30, height: 30,))])
 
                                 : category == 2 ?
                                 Column(children: [
-                                Container(width: 150,alignment: Alignment.center,
+                                Container(width: 200,alignment: Alignment.center,
                                 color: Colors.blue[100],     
-                                child:                             
-                                Text(replyName, style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
-                                Container(width: 150,alignment: Alignment.center,
+                                child: Stack(
+                                children: [ 
+                                Align(alignment: Alignment.center,child:
+                                Text(replyName, style: TextStyle(fontSize: 10,fontFamily: 'BrandonBI'),)),
+                                Align(alignment: Alignment.centerRight,
+                                child: Container(width: 20, height: 20,
+                                child: FloatingActionButton(
+                                backgroundColor: Color.fromARGB(200, 255, 255, 255),
+                                onPressed: (){
+                                  setState(() {
+                                      reply = ValueNotifier<bool>(false);
+                                      replyMsg = "";
+                                      replyName = "";     
+                                  });
+                                },
+                                child: Icon(Icons.close, color: Colors.blueGrey,size: 15,),
+                                )))
+                                ])),
+                                Container(width: 200,alignment: Alignment.center,
                                 color: Colors.blue[50],     
-                                child:  
-                                Image.network(replyMsg, width: 30, height: 30,))])
+                                child: isImage == true ?  
+                                Image.network(replyMsg, width: 30, height: 30,)
+                                : Text(photoname, style: TextStyle(fontSize: 10,fontFamily: 'BrandonBI')),
+                                )])
 
                               : Column(children: [ 
-                              Container(width: 150,alignment: Alignment.center,
+                              Container(width: 200,alignment: Alignment.center,
                               color: Colors.blue[100],     
-                               child:                                                                 
-                              Text(replyName, style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI')),),
-                              Container(width: 150,alignment: Alignment.center,
+                                child: Stack(
+                                children: [ 
+                                Align(alignment: Alignment.center,child:
+                                Text(replyName, style: TextStyle(fontSize: 10,fontFamily: 'BrandonBI'),)),
+                                Align(alignment: Alignment.centerRight,
+                                child: Container(width: 20, height: 20,
+                                child: FloatingActionButton(
+                                backgroundColor: Color.fromARGB(200, 255, 255, 255),
+                                onPressed: (){
+                                  setState(() {
+                                      reply = ValueNotifier<bool>(false);
+                                      replyMsg = "";
+                                      replyName = "";     
+                                  });
+                                },
+                                child: Icon(Icons.close, color: Colors.blueGrey,size: 15,),
+                                )))
+                                ])),
+                              Container(width: 200,alignment: Alignment.center,
                               color: Colors.blue[50],     
                               child:                                
                               Text(replyMsg, style: TextStyle(fontSize: 15,fontFamily: 'BrandonLI'),)),
                               ],)
-                            ),)
+                            ),);
 
-        ] else...[
-
-        ],
+        } else {
+          return Text("");
+        }
+        }),
 
         Row(mainAxisAlignment: MainAxisAlignment.start,
         children: [
+//.........................................................................................................          
           IconButton(onPressed: (){
             setState(() {
               //cat = 1;
@@ -551,18 +633,87 @@ ClearMessage() async{
           icon: Icon(CupertinoIcons.smiley, color: Colors.blueGrey,)),
 
           SizedBox(width: 5,),
+// //.........................................................................................................
+//           IconButton(onPressed: () async {
+//             setState(() {
+//               isImage = true;
+//               cat = 2;
+//               isShowSticker = false ;
+//             });
 
-          IconButton(onPressed: (){
+//             getImage(true);              
+//             //selectFile;
+
+//             // final result = await FilePicker.platform.pickFiles(allowMultiple: false);
+//             // if(result == null) return;
+
+//             // setState(() {
+//             //   pickfile = result.files.first;
+//             // _image = File(pickfile!.path!);
+//             //   photoname = pickfile!.name;
+//             // });
+          
+            
+
+//           }, 
+//           icon: cat != 2 ? 
+//           Icon(CupertinoIcons.photo, color: Colors.blueGrey,)
+//           : isImage == true ? 
+//           isloading == false ?         
+//           ClipRRect( 
+//             child: Image.file(
+//               _image,
+//               width: 30,
+//               height: 30,
+//               fit: BoxFit.fill
+//               ),)
+//           : CircularProgressIndicator(color: Colors.blueGrey,)
+//           : Icon(CupertinoIcons.photo, color: Colors.blueGrey,)
+//           ),
+// //.........................................................................................................
+//           SizedBox(width: 5,),
+
+//           IconButton(onPressed: () async {
+//             setState(() {
+//               isImage = false;
+//               cat = 2;
+//               isShowSticker = false ;
+//             });
+
+//             final result = await FilePicker.platform.pickFiles(allowMultiple: false);
+//             if(result == null) return;
+
+//             setState(() {
+//               pickfile = result.files.first;
+//               _image = File(pickfile!.path!);
+//               photoname = pickfile!.name;
+//             });
+                     
+
+//           }, 
+//           icon: cat != 2 ? 
+//           Icon(CupertinoIcons.folder, color: Colors.blueGrey,)
+//            : isImage == false ? isloading == false ?  
+//           Material(
+//           color: Colors.white,elevation: 10,
+//           child: Text("pickfile!.name", textAlign: TextAlign.center,
+//           style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 10, color: Colors.blueGrey,fontWeight: FontWeight.bold)))
+//           : CircularProgressIndicator(color: Colors.blueGrey,)
+//           : Icon(CupertinoIcons.folder, color: Colors.blueGrey,)
+//           ),
+// //.........................................................................................................
+          IconButton(onPressed: () async {
             setState(() {
-              cat = 2;
               isShowSticker = false ;
             });
-
-            getImage(true);
+            
+            Showbottomsheet(context);
 
           }, 
-          icon: cat != 2 ? Icon(CupertinoIcons.photo, color: Colors.blueGrey,)
+          icon: cat != 2 ? 
+          Icon(FontAwesomeIcons.upload, color: Colors.blueGrey,)
           : isloading == false ?
+          isImage == true ?          
           ClipRRect( 
             child: Image.file(
               _image,
@@ -570,9 +721,11 @@ ClearMessage() async{
               height: 30,
               fit: BoxFit.fill
               ),)
+          : Text(pickfile!.name, textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 10, color: Colors.blueGrey,fontWeight: FontWeight.bold))
           : CircularProgressIndicator(color: Colors.blueGrey,)
           ),
-
+//.........................................................................................................
           SizedBox(width: 5,),
 
                Expanded(child: 
@@ -587,7 +740,7 @@ ClearMessage() async{
                 ),
                 textCapitalization: TextCapitalization.words,
                 decoration:  InputDecoration(
-                  hintText: cat == 1? 'Type down your message' : 'Tap here cancel image',
+                  hintText: cat == 1? 'Type down your message' : 'Tap here choose send message',
                   border: UnderlineInputBorder(),
                 ),
               ),
@@ -614,8 +767,10 @@ ClearMessage() async{
                         'msg': messageController.text.trim(),
                         'time': outputFormat.format(DateTime.now()),
                         'sortTime': DateTime.now().toString(),
+                        'isImage': isImage,
+                        'photoname': photoname,
                         'id': user!.email!,  
-                        'reply': reply,
+                        'reply': reply.value,
                         'replyName': replyName,
                         'replyMsg': replyMsg,  
                         'name': Globalname,                       
@@ -638,7 +793,7 @@ ClearMessage() async{
 
                 setState(() {
                   cat = 1;
-                  reply = false;
+                  reply = ValueNotifier<bool>(false);
                   replyMsg = "";
                   replyName = "";  
                 
@@ -658,7 +813,7 @@ ClearMessage() async{
 
                   setState(() {                    
                   isloading = false;
-                  reply = false;
+                  reply = ValueNotifier<bool>(false);
                   replyMsg = "";
                   replyName = "";  
                  
@@ -675,6 +830,109 @@ ClearMessage() async{
     );
 
   }
+
+Showbottomsheet (context){
+          showBottomSheet(
+              context: context,
+              builder: (context) => Card(
+              color: Color.fromARGB(211, 255, 255, 255),
+              child: Container(
+                height: 150,
+                width: double.infinity,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    Center(child: 
+                    IconButton(onPressed: () async {
+                      Navigator.pop(context);
+                    }, 
+                    icon: Icon(Icons.keyboard_arrow_down, color: Colors.blueGrey)
+                    ),),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+//.........................................................................................................
+          CircleAvatar(backgroundColor: Colors.red,
+          radius: 40,
+          child:
+          Padding(
+          padding: EdgeInsets.only(bottom: 10, right: 5),
+          child:
+          IconButton(onPressed: () async {
+            setState(() {
+              isImage = true;
+              cat = 2;
+              isShowSticker = false ;
+            });
+
+            getImage(true);                
+            Navigator.pop(context);
+          }, 
+          icon: 
+          //cat != 2 ? 
+          Icon(CupertinoIcons.photo, color: Colors.white, size: 40,)
+          // : isImage == true ? 
+          // isloading == false ?         
+          // ClipRRect( 
+          //   child: Image.file(
+          //     _image,
+          //     width: 30,
+          //     height: 30,
+          //     fit: BoxFit.fill
+          //     ),)
+          // : CircularProgressIndicator(color: Colors.blueGrey,)
+          // : Icon(CupertinoIcons.photo, color: Colors.blueGrey,)
+          ))),
+//.........................................................................................................
+          SizedBox(width: 5,),
+
+          CircleAvatar(backgroundColor: Colors.blue[200],
+          radius: 40,
+          child:
+          Padding(
+          padding: EdgeInsets.only(bottom: 10, right: 5),
+          child:
+          IconButton(onPressed: () async {
+            setState(() {
+              isImage = false;
+              cat = 2;
+              isShowSticker = false ;
+            });
+
+            final result = await FilePicker.platform.pickFiles(allowMultiple: false);
+            if(result == null) return;
+
+            setState(() {
+              pickfile = result.files.first;
+              _image = File(pickfile!.path!);
+              photoname = pickfile!.name;
+            });
+                     
+            Navigator.pop(context);
+          }, 
+          icon: 
+          //cat != 2 ? 
+          Icon(CupertinoIcons.folder, color: Colors.white, size: 40,)
+          //  : isImage == false ? isloading == false ?  
+          // Material(
+          // color: Colors.white,elevation: 10,
+          // child: Text("pickfile!.name", textAlign: TextAlign.center,
+          // style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 10, color: Colors.blueGrey,fontWeight: FontWeight.bold)))
+          // : CircularProgressIndicator(color: Colors.blueGrey,)
+          // : Icon(CupertinoIcons.folder, color: Colors.blueGrey,)
+          ),)),
+              ],
+          ),
+
+          SizedBox(height: 5,),
+
+          ],),
+
+        )),);  
+  }   
+//.........................................................................................................
+
   Widget buildSticker() {
     return Expanded(
       child: Container(
@@ -794,12 +1052,14 @@ onSendMessage(String sticker) async {
                         'sticker': sticker,
                         'time': outputFormat.format(DateTime.now()),
                         'sortTime': DateTime.now().toString(),
+                        'isImage': isImage,
                         'id': user!.email!,   
-                        'reply': reply,
+                        'reply': reply.value,
                         'replyName': replyName,
                         'replyMsg': replyMsg,  
                         'name': Globalname,                       
                         'cat': 1,
+                        'photoname': photoname,
                         'cat1': category,
                         'isSelected': false,
                         'date': dateFormat.format(DateTime.now())                  
@@ -814,7 +1074,7 @@ onSendMessage(String sticker) async {
                                     textColor: Colors.white); 
                                     }    
                 setState(() {
-                        reply = false;
+                        reply = ValueNotifier<bool>(false);
                         replyMsg = "";
                         replyName = "";  
                 });
@@ -826,8 +1086,10 @@ onSendMessage(String sticker) async {
 String replyName = "";
 String replyMsg = "";
 int category = 0;
-bool reply = false;
+bool isImage = true; 
+ValueNotifier<bool> reply = ValueNotifier(false);
 ScrollController scrollController = ScrollController();
+String photoname = "";
 
 
 //CHAT1.........................................................................................................
@@ -929,69 +1191,74 @@ class _chat1State extends State<chat1> {
                   itemCount: snapshot.data.docs.length,        
                   itemBuilder: (BuildContext context, int index) {
 
-                  return GestureDetector(
+                  return 
+                Stack(
+                  children: [
+                                 
+                  //GestureDetector(
                 
-                onHorizontalDragEnd: (DragEndDetails details) async{
-                  if (details.primaryVelocity! > 0) {
+                // onHorizontalDragEnd: (DragEndDetails details) async{
+                //   if (details.primaryVelocity! > 0) {
 
-                  if(snapshot.data.docs[index]["cat"] == 1){    
-                    setState(() {
+                //   if(snapshot.data.docs[index]["cat"] == 1){    
+                //     setState(() {
                       
-                        reply = true;
-                        replyMsg = snapshot.data.docs[index]["sticker"];
-                        replyName = snapshot.data.docs[index]["name"];   
-                        category = 1;                                       
-                    });                
-                        Fluttertoast.showToast(  
-                                    msg:"Replying to photo \n double tap on message to view.!",  
-                                    toastLength: Toast.LENGTH_LONG,  
-                                    gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
-                                    textColor: Colors.white); 
+                //         reply = ValueNotifier<bool>(true);
+                //         replyMsg = snapshot.data.docs[index]["sticker"];
+                //         replyName = snapshot.data.docs[index]["name"];   
+                //         category = 1;                                       
+                //     });                
+                //         Fluttertoast.showToast(  
+                //                     msg:"Replying to sticker \n double tap on message to view.!",  
+                //                     toastLength: Toast.LENGTH_LONG,  
+                //                     gravity: ToastGravity.BOTTOM,  
+                //                     backgroundColor: Colors.blueGrey,  
+                //                     textColor: Colors.white); 
 
-                  } else if(snapshot.data.docs[index]["cat"] == 2){
-                    setState(() {
+                //   } else if(snapshot.data.docs[index]["cat"] == 2){
+                //     setState(() {
                       
-                        reply = true;
-                        replyMsg = snapshot.data.docs[index]["photo"];
-                        replyName = snapshot.data.docs[index]["name"];  
-                        category = 2;                                        
+                //          reply = ValueNotifier<bool>(true);
+                //         replyMsg = snapshot.data.docs[index]["photo"];
+                //         replyName = snapshot.data.docs[index]["name"];  
+                //         category = 2;                                        
  
-                    });
-                        Fluttertoast.showToast(  
-                                    msg:"Replying to sticker \n double tap on message to view.!",  
-                                    toastLength: Toast.LENGTH_LONG,  
-                                    gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
-                                    textColor: Colors.white);                     
-                  } else {
-                    setState(() {
+                //     });
+                //         Fluttertoast.showToast(  
+                //                     msg:"Replying to photo \n double tap on message to view.!",  
+                //                     toastLength: Toast.LENGTH_LONG,  
+                //                     gravity: ToastGravity.BOTTOM,  
+                //                     backgroundColor: Colors.blueGrey,  
+                //                     textColor: Colors.white);                     
+                //   } else {
+                //     setState(() {
                       
-                        reply = true;
-                        replyMsg = snapshot.data.docs[index]["msg"];
-                        replyName = snapshot.data.docs[index]["name"];   
-                        category = 3;   
-                    });
-                        Fluttertoast.showToast(  
-                                    msg:"Replying to " + replyMsg.toString() + "\n double tap on message to view.!",  
-                                    toastLength: Toast.LENGTH_LONG,  
-                                    gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
-                                    textColor: Colors.white);                     
-                  }                 
-                  }
-                if (details.primaryVelocity! < 0) {
+                //         reply = ValueNotifier<bool>(true);
+                //         replyMsg = snapshot.data.docs[index]["msg"];
+                //         replyName = snapshot.data.docs[index]["name"];   
+                //         category = 3;   
+                //     });
+                //         Fluttertoast.showToast(  
+                //                     msg:"Replying to " + replyMsg.toString() + "\n double tap on message to view.!",  
+                //                     toastLength: Toast.LENGTH_LONG,  
+                //                     gravity: ToastGravity.BOTTOM,  
+                //                     backgroundColor: Colors.blueGrey,  
+                //                     textColor: Colors.white);                     
+                //   }                 
+                //   }
+                // if (details.primaryVelocity! < 0) {
 
-                    setState(() {
-                        reply = false;
-                        replyMsg = "";
-                        replyName = "";     
-                    });
-                  }
+                //     setState(() {
+                //         reply = ValueNotifier<bool>(false);
+                //         replyMsg = "";
+                //         replyName = "";     
+                //     });
+                //   }
                   
-                  },
+                //   },
                   
-                 child: InkWell(
+                //  child: 
+                 InkWell(
                   onLongPress: () async {
                   if (snapshot.data.docs[index]["id"] == user!.email!){
                     if(snapshot.data.docs[index]["isSelected"] == true){
@@ -1074,6 +1341,7 @@ class _chat1State extends State<chat1> {
                                 Image.asset("assets/sticker/" + snapshot.data.docs[index]["replyMsg"] + ".gif", width: 30, height: 30,))])
 
                                 : snapshot.data.docs[index]["cat1"] == 2 ?
+                                snapshot.data.docs[index]["isImage"] == true ?
                                 Column(children: [
                                 Container(width: 150,alignment: Alignment.center,
                                 color: Colors.blue[100],
@@ -1084,15 +1352,25 @@ class _chat1State extends State<chat1> {
                                 child: 
                                 Image.network(snapshot.data.docs[index]["replyMsg"], width: 30, height: 30,))])
 
-                              : Column(children: [  
-                              Container(width: 150,alignment: Alignment.center,
-                              color: Colors.blue[100],
-                              child:                               
-                              Text(snapshot.data.docs[index]["replyName"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
-                              Container(width: 150,alignment: Alignment.center,
-                              color: Colors.blue[50],
-                              child: 
-                              Text(snapshot.data.docs[index]["replyMsg"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonLI'),)),
+                                : Column(children: [  
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[100],
+                                child:                               
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[50],
+                                child: 
+                                Text(snapshot.data.docs[index]["photoname"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonLI'),))])
+
+                                : Column(children: [  
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[100],
+                                child:                               
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[50],
+                                child: 
+                                Text(snapshot.data.docs[index]["replyMsg"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonLI'),)),
                               ],)
                             ),)
                           ]else...[
@@ -1108,9 +1386,19 @@ class _chat1State extends State<chat1> {
                         : snapshot.data.docs[index]["cat"] == 2 ?
                         InkWell(
                         onTap: () => Navigator.push(context, MaterialPageRoute(
-                        builder: (context)=> PhotoView(url: snapshot.data.docs[index]["photo"], date: snapshot.data.docs[index]["date"]))),
-                        child: 
-                        Image.network(snapshot.data.docs[index]["photo"], width: 150, height: 150,),)
+                        builder: (context)=> PhotoView2(url: snapshot.data.docs[index]["photo"], date: snapshot.data.docs[index]["date"],
+                        name: snapshot.data.docs[index]["photoname"], isImage: snapshot.data.docs[index]["isImage"],))),
+                        child: snapshot.data.docs[index]["isImage"] == true ?
+                        Image.network(snapshot.data.docs[index]["photo"], width: 150, height: 150,)
+                        :  SizedBox(width: 200,
+                        child:
+                        Row(
+                        children: [
+                        Icon(Icons.file_download, color: Colors.blueGrey, size: 30,),
+                        SizedBox(width: 10),
+                        Expanded(child:
+                        Text(snapshot.data.docs[index]["photoname"], style: TextStyle(fontSize: 10,fontFamily: 'BrandonLI'),))]))
+                        )
                         
                         : InkWell(
                         onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["msg"]),
@@ -1125,10 +1413,93 @@ class _chat1State extends State<chat1> {
                         ],)
                       ),
                     ),
-                  )));
+                  )),
+                  // CircleAvatar(
+                  //   child:
+                  SizedBox(width: 10,),  
+
+                  ValueListenableBuilder(
+                  valueListenable: reply,
+                  builder: (context, value, widget) { 
+                  return Align(alignment: Alignment.centerLeft,
+                  child: 
+                  Container(
+                  padding: EdgeInsets.only(left: 10),
+                  width: 40, height: 40,
+                  child: FloatingActionButton(
+                  backgroundColor: Color.fromARGB(200, 255, 255, 255),
+                  onPressed: (){
+                  if(snapshot.data.docs[index]["cat"] == 1){    
+                    setState(() {
+                      
+                        reply = ValueNotifier<bool>(true);
+                        replyMsg = snapshot.data.docs[index]["sticker"];
+                        replyName = snapshot.data.docs[index]["name"];   
+                        category = 1;                                       
+                    });                
+                        Fluttertoast.showToast(  
+                                    msg:"Replying to sticker \n double tap on message to view.!",  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white); 
+
+                  } else if(snapshot.data.docs[index]["cat"] == 2){
+                    if(snapshot.data.docs[index]["isImage"] == true){
+
+                    setState(() {                     
+                        reply = ValueNotifier<bool>(true);
+                        isImage  = snapshot.data.docs[index]["isImage"];
+                        replyMsg = snapshot.data.docs[index]["photo"];
+                        replyName = snapshot.data.docs[index]["name"];  
+                        category = 2;                                        
+ 
+                    });
+                        Fluttertoast.showToast(  
+                                    msg:"Replying to photo \n double tap on message to view.!",  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white);  
+                    } else{
+                    setState(() {                     
+                        reply = ValueNotifier<bool>(true);
+                        photoname = snapshot.data.docs[index]["photoname"];
+                        isImage  = snapshot.data.docs[index]["isImage"];
+                        replyMsg = snapshot.data.docs[index]["photo"];
+                        replyName = snapshot.data.docs[index]["name"];  
+                        category = 2;                                        
+ 
+                    });
+                        Fluttertoast.showToast(  
+                                    msg:"Replying to doc \n double tap on message to view.!",  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white);                        
+                    }                   
+                  } else {
+                    setState(() {                      
+                        reply = ValueNotifier<bool>(true);
+                        replyMsg = snapshot.data.docs[index]["msg"];
+                        replyName = snapshot.data.docs[index]["name"];   
+                        category = 3;   
+                    });
+                        Fluttertoast.showToast(  
+                                    msg:"Replying to " + replyMsg.toString() + "\n double tap on message to view.!",  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white);                     
+                  }
+                  }, 
+                  child: Icon(Icons.reply,color: Colors.blueGrey,))),
+                  );
+                  })
+                  ]);
               },),
 
-              SizedBox(height: 50,)
+              //SizedBox(height: 50,)
               
               ]);
     
@@ -1138,7 +1509,8 @@ class _chat1State extends State<chat1> {
   
 }
 
-//PhotoView............................................................................................
+
+//PhotoView for profile............................................................................................
 class PhotoView extends StatefulWidget {
 
   final date;
@@ -1150,10 +1522,31 @@ class PhotoView extends StatefulWidget {
 }
 
 class PhotoViewState extends State<PhotoView>{
+
+  double? progress = null;
+
   @override
   Widget build(BuildContext context) {
   return Scaffold(
   appBar: AppBar(
+        // actions: [
+        //   progress != null ? Container(width:80,padding: EdgeInsets.only(right: 20, left: 10),
+        //   child: Center(child:
+        //   CircularProgressIndicator(value: progress,color: Colors.blueGrey,
+        //   backgroundColor: Color.fromARGB(202, 96, 125, 139),)))
+
+        //   : IconButton(
+        //     icon:  Icon(
+        //       Icons.download,
+        //       color: Colors.white, // Change Custom Drawer Icon Color
+        //     ),
+        //     onPressed: () {
+        //         Permission.storage.request();
+        //         Permission.accessMediaLocation;
+        //         Permission.manageExternalStorage;
+        //         downloadFile(widget.url, widget.date);             
+        //   },),          
+        // ],
         backgroundColor: Colors.black,    
         leading: IconButton(
               icon:  Icon(
@@ -1184,6 +1577,140 @@ class PhotoViewState extends State<PhotoView>{
   ); 
       
   }
+    // Future downloadFile(String url, String name) async {
 
+    //    Directory tempDir = await getApplicationDocumentsDirectory();
+    //    String path = '/storage/emulated/0/Download/${name}.jpeg';
+
+
+
+
+    //   await Dio().download(url, path,
+    //   onReceiveProgress: (received, total){
+    //     double progress1 = received/ total;
+    //     print(path);
+    //     print(url);
+    //     setState(() {
+    //       //progress = progress1;
+    //     });
+    //   });
+
+    // print(path);
+    // OpenFile.open(path, type: "image/jpeg");
+
+    // }
+
+}
+
+//PhotoView for multimedia............................................................................................
+class PhotoView2 extends StatefulWidget {
+
+  final date;
+  final url; 
+  final name;
+  final isImage;
+  PhotoView2({Key? key,this.date,this.url,this.name,this.isImage}) : super(key: key);
+
+  @override
+  PhotoView2State createState() => PhotoView2State();
+}
+
+class PhotoView2State extends State<PhotoView2>{
+
+  double? progress = null;
+
+  @override
+  Widget build(BuildContext context) {
+  return Scaffold(
+  appBar: AppBar(
+        actions: [
+          progress != null ? Container(width:80,padding: EdgeInsets.only(right: 20, left: 10),
+          child: Center(child:
+          CircularProgressIndicator(value: progress,color: Colors.blueGrey,
+          backgroundColor: Color.fromARGB(202, 96, 125, 139),)))
+
+          : IconButton(
+            icon:  Icon(
+              Icons.download,
+              color: Colors.white, // Change Custom Drawer Icon Color
+            ),
+            onPressed: () {
+                Permission.storage.request();
+                Permission.accessMediaLocation;
+                Permission.manageExternalStorage;
+                downloadFile(widget.url, widget.name);             
+          },),          
+        ],
+        backgroundColor: Colors.black,    
+        leading: IconButton(
+              icon:  Icon(
+                Icons.arrow_back,
+                color: Colors.white, // Change Custom Drawer Icon Color
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },),
+        title:  Text(
+          widget.date,
+          style: TextStyle(
+            color: Colors.white,fontFamily: 'BrandonBIBI',
+            fontSize: 18,
+          ),
+        ),
+        elevation: 5.0,
+        centerTitle: true,
+      ),
+
+      backgroundColor: Colors.black,
+
+      body: Container(
+        color: Colors.black,
+        child: Center(child:
+
+        
+        widget.isImage == true ?
+        Image.network(widget.url)
+        : Column(mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+        Icon(Icons.folder_open, size: 200, color: Colors.white),
+        Text(widget.name, style: TextStyle(fontSize: 15,fontFamily: 'BrandonLI', color: Colors.white),)],),
+        ),
+        ),
+  ); 
+      
+  }
+    Future downloadFile(String url, String name) async {
+
+       Directory tempDir = await getApplicationDocumentsDirectory();
+       String path = '/storage/emulated/0/Download/${name}';
+
+
+
+
+      await Dio().download(url, path,
+      onReceiveProgress: (received, total){
+        double progress1 = received/ total;
+        print(path);
+        print(url);
+        setState(() {
+          //progress = progress1;
+        });
+      });
+
+    print(path);
+    OpenFile.open(path, type: "*/*");
+    // } catch(e) {
+    //   try{
+    //   OpenFile.open(path, type: "video/mp4");
+    //   } catch(e) {
+    //     try{
+    //     OpenFile.open(path, type: "application/pdf");
+    //     } catch(e) {
+    //       OpenFile.open(path, type: "*/*");
+    //     }
+    //   }
+    // }
+
+  }
 
 }

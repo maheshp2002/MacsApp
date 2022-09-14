@@ -36,7 +36,7 @@ class Splash extends StatefulWidget {
         Image.asset('assets/logo.png', width:150,height:150),
         ),
            const Padding(
-             padding: EdgeInsets.only(top: 1),
+             padding: EdgeInsets.only(top: 10),
            child: Text('MacsApp',
                textAlign: TextAlign.center,
                overflow: TextOverflow.ellipsis,

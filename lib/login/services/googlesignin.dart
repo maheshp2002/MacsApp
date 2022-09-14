@@ -122,7 +122,7 @@ Future<String> uploadFile(_image) async {
     // Let user select photo from gallery
     if(gallery) {
       pickedFile = (await picker.getImage(
-          source: ImageSource.gallery,maxWidth: 150, maxHeight: 150))!;
+          source: ImageSource.gallery,))!;
     } 
     // Otherwise open camera to get new photo
     else{

@@ -49,11 +49,15 @@ dependencies:
   path_provider: ^2.0.11
   http: ^0.13.5
   path: ^1.8.0
+  file_picker: ^4.6.1
 
   #chat
   cupertino_icons: ^1.0.5
   intl: ^0.17.0
-  #emoji_picker_flutter: ^1.1.2
+  dio: ^4.0.6
+  permission_handler: ^10.0.0
+  open_file: ^3.2.1
+
 
 dev_dependencies:
   flutter_test:
