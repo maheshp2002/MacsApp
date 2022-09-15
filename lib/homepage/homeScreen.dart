@@ -10,6 +10,7 @@ import 'package:macsapp/main.dart';
 import 'package:macsapp/profile.dart';
 import 'package:macsapp/request/request.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class homeScreen extends StatefulWidget {
 
@@ -176,7 +177,7 @@ class homeScreenState extends State<homeScreen>{
                         ),),                       
                       leading: InkWell(
                       onTap: () => Navigator.push(context, MaterialPageRoute(
-                      builder: (context)=> PhotoView(url: snapshot.data['img'], date: snapshot.data['name']))),
+                      builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name']))),
                       child:  
 
                       ClipRRect(
@@ -188,12 +189,12 @@ class homeScreenState extends State<homeScreen>{
                     } else {   
                     return 
                     ListTile(
-                      title: Text(snapshot.data['name'],style: const TextStyle(fontFamily: 'BrandonLI',
-                          color: Colors.blueGrey,
+                      title: Text(snapshot.data['name'],style:  TextStyle(fontFamily: 'BrandonLI',
+                          color: Theme.of(context).hintColor,
                           fontSize: 20,
                         ),),
-                      subtitle: Text(snapshot.data['about'],style: const TextStyle(fontFamily: 'BrandonLI',
-                          color: Colors.blueGrey,
+                      subtitle: Text(snapshot.data['about'],style:  TextStyle(fontFamily: 'BrandonLI',
+                          color: Theme.of(context).hintColor,
                           fontSize: 15,
                         ),),  
                       // trailing: IconButton(
@@ -204,7 +205,7 @@ class homeScreenState extends State<homeScreen>{
                       // ),                      
                       leading: InkWell(
                       onTap: () => Navigator.push(context, MaterialPageRoute(
-                      builder: (context)=> PhotoView(url: snapshot.data['img'], date: snapshot.data['name']))),
+                      builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name']))),
                       child:  
 
                       ClipRRect(
@@ -228,14 +229,14 @@ class homeScreenState extends State<homeScreen>{
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor ,
-          title: const Text("Do you want to remove this friend?", textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold)),
+          title:  Text("Do you want to remove this friend?", textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),
           actions: <Widget>[
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
               primary: Theme.of(context).scaffoldBackgroundColor 
              ),               
-            child: const Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            child:  Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
             onPressed: () {  
               Navigator.of(context).pop();  
             },  
@@ -244,7 +245,7 @@ class homeScreenState extends State<homeScreen>{
             style: ElevatedButton.styleFrom(
               primary: Theme.of(context).scaffoldBackgroundColor 
              ),            
-            child: const Text('Remove',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            child:  Text('Remove',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
             onPressed: () async { 
               String imgUrl = "";
                         try{
@@ -308,7 +309,24 @@ class NavDrawer extends StatefulWidget {
 class _NavDrawerState extends State<NavDrawer> {
   
   User? user = FirebaseAuth.instance.currentUser;
+//launch help......................................................................................................
+launchURL() async{
 
+  var url = Uri.parse("https://brokencodetech.github.io/");
+  if (await canLaunchUrl(url)) {
+    await launchUrl(url, mode: LaunchMode.externalApplication);
+  } else {
+            Fluttertoast.showToast(  
+            msg: 'Could not launch website',  
+            toastLength: Toast.LENGTH_LONG,  
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.blueGrey,  
+            textColor: Colors.white  
+            ); 
+  }
+
+}
+//.................................................................................................................. 
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -328,8 +346,8 @@ class _NavDrawerState extends State<NavDrawer> {
                     image: AssetImage("assets/login/login2.gif"))),
           ),
           ListTile(
-            leading: Icon(Icons.verified_user),
-            title: Text('Profile'),
+            leading: Icon(Icons.verified_user, color: Theme.of(context).hintColor),
+            title: Text('Profile', style: TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor)),
             
             onTap: () async{
               
@@ -340,8 +358,8 @@ class _NavDrawerState extends State<NavDrawer> {
                 builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
                 if (!snapshot.hasData) {   
                   return ListTile(
-                    leading: Icon(Icons.person_add),
-                    title: Text('Requests'),
+                    leading: Icon(Icons.person_add, color: Theme.of(context).hintColor),
+                    title: Text('Requests', style: TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor)),
                     
                     onTap: () async{},
                   );
@@ -349,8 +367,8 @@ class _NavDrawerState extends State<NavDrawer> {
 
                 else{
                   return ListTile(
-                    leading: Icon(Icons.person_add),
-                    title: Text('Requests'),                   
+                    leading: Icon(Icons.person_add, color: Theme.of(context).hintColor),
+                    title: Text('Requests', style: TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor)),                   
                     onTap: () async{
                     Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => 
                     Requests(name: snapshot.data['name'], about: snapshot.data['about'],
@@ -359,13 +377,15 @@ class _NavDrawerState extends State<NavDrawer> {
               );
             }}),          
           ListTile(
-            leading: Icon(Icons.border_color),
-            title: Text('About'),
-            onTap: () => {Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => homeScreen()))},
+            leading: Icon(Icons.border_color, color: Theme.of(context).hintColor),
+            title: Text('About', style: TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor)),
+            onTap: () => {
+              launchURL()
+            },
           ),
           ListTile(
-            leading: Icon(Icons.exit_to_app),
-            title: Text('Logout'),
+            leading: Icon(Icons.exit_to_app, color: Theme.of(context).hintColor),
+            title: Text('Logout', style: TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor)),
             onTap: () async{ 
               await _logout();
               
@@ -381,14 +401,14 @@ class _NavDrawerState extends State<NavDrawer> {
         context: context,
         builder: (context) => AlertDialog(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor ,
-          title: const Text("Do you want to logout?", textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold)),
+          title:  Text("Do you want to logout?", textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),
           actions: <Widget>[
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
               primary: Theme.of(context).scaffoldBackgroundColor 
              ),               
-            child: const Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            child:  Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
             onPressed: () {  
               Navigator.of(context).pop();  
             },  
@@ -397,7 +417,7 @@ class _NavDrawerState extends State<NavDrawer> {
             style: ElevatedButton.styleFrom(
               primary: Theme.of(context).scaffoldBackgroundColor 
              ),               
-            child: const Text('Logout',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            child:  Text('Logout',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
             onPressed: () async { 
 
             FirebaseService service = new FirebaseService();
@@ -512,17 +532,23 @@ class UsersListState extends State<UsersList>{
                     Card(elevation: 15,
                     child:
                     ListTile(
-                      title: Text(snapshot.data.docs[index]['name'],style: const TextStyle(fontFamily: 'BrandonLI',
-                          color: Colors.blueGrey,
+                      title: Text(snapshot.data.docs[index]['name'],style:  TextStyle(fontFamily: 'BrandonLI',
+                          color: Theme.of(context).hintColor,
                           fontSize: 20,
                         ),),
-                      subtitle: Text(snapshot.data.docs[index]['about'],style: const TextStyle(fontFamily: 'BrandonLI',
-                          color: Colors.blueGrey,
+                      subtitle: Text(snapshot.data.docs[index]['about'],style:  TextStyle(fontFamily: 'BrandonLI',
+                          color: Theme.of(context).hintColor,
                           fontSize: 15,
                         ),),
-                      leading: ClipRRect(
+                      leading: InkWell(
+                      child: ClipRRect(
                       borderRadius: BorderRadius.circular(100),child: 
                       Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50, fit: BoxFit.fill,),),
+                      onTap: () {
+                      Navigator.push(context, MaterialPageRoute(
+                      builder: (context)=> photoView(url: snapshot.data.docs[index]['img'], date: snapshot.data.docs[index]['name'])));                        
+                      },
+                      ),
                       trailing: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         primary: Colors.blueGrey
@@ -617,11 +643,21 @@ class _SearchFeedState extends State<SearchFeed> {
   Widget build(BuildContext context) {
     return FirestoreSearchScaffold(
       appBarBackgroundColor: Colors.blueGrey,
+      
+      searchBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      scaffoldBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      
+      searchTextColor: Theme.of(context).hintColor,
+      clearSearchButtonColor: Theme.of(context).hintColor,
+      searchTextHintColor: Theme.of(context).hintColor,
+      searchIconColor: Theme.of(context).hintColor,
+
       appBarTitle: "Search",
       firestoreCollectionName: "Users",
       searchBy: 'name',
-      scaffoldBody: Center(
-        child: Text("Search for product", style: TextStyle(color: Colors.grey),),
+      scaffoldBody: Container(color: Theme.of(context).scaffoldBackgroundColor,
+        child: Center(
+        child: Text("Search for product..!", style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor),)),
       ),
 
       dataListFromSnapshot: DataModel(docid: '', email: '', img: '', about: '', name: '').dataListFromSnapshot,
@@ -629,32 +665,41 @@ class _SearchFeedState extends State<SearchFeed> {
         if (snapshot.hasData) {
           final List<DataModel> dataList = snapshot.data;
           if (dataList.isEmpty) {
-            return const Center(
-              child: Text('No Results Returned'),
-            );
+            return Container(color: Theme.of(context).scaffoldBackgroundColor,
+            child: Center(
+              child: Text('No Results Returned..!', style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor),),
+            ));
           }
-          return ListView.builder(
+          return Container(color: Theme.of(context).scaffoldBackgroundColor,
+          child: ListView.builder(
               itemCount: dataList.length,
               itemBuilder: (context, index) {
                 final DataModel data = dataList[index];
 
-                return Column(
+                return 
+                 Column(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Card(elevation: 15,
+                    Card(color: Theme.of(context).scaffoldBackgroundColor,
+                      elevation: 15,
                     child: ListTile(
-                      leading:
-                      ClipRRect(
+                      leading: InkWell(
+                      child: ClipRRect(
                       borderRadius: BorderRadius.circular(100),
                       child:
                        Image.network(
                         '${data.img}',
-                        width: 80,
+                        width: 55,
                         height: 80,
                         fit: BoxFit.fill,
                       )),
+                      onTap: () {
+                      Navigator.push(context, MaterialPageRoute(
+                      builder: (context)=> photoView(url: data.img, date: data.name)));                        
+                      },
+                      ),
                       trailing: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         primary: Colors.blueGrey
@@ -693,30 +738,33 @@ class _SearchFeedState extends State<SearchFeed> {
                                 );      
                       }                                                                                      
                       }),
-                      title: Text('${data.name}',style: const TextStyle(fontFamily: 'BrandonBI',
-                          color: Colors.blueGrey,
+                      title: Text('${data.name}',style:  TextStyle(fontFamily: 'BrandonBI',
+                          color: Theme.of(context).hintColor,
                           fontSize: 20,
                         ),),
-                      subtitle:  Text('${data.about}',style: const TextStyle(fontFamily: 'BrandonBI',
-                          color: Colors.blueGrey,
+                      subtitle:  Text('${data.about}',style:  TextStyle(fontFamily: 'BrandonBI',
+                          color: Theme.of(context).hintColor,
                           fontSize: 15,
                         ),),
                     ),),
 
                   ],
                 );
-              });
+              }));
         }
 
         if (snapshot.connectionState == ConnectionState.done) {
           if (!snapshot.hasData) {
-            return const Center(
-              child: Text('No Results found'),
-            );
+            return Container(color: Theme.of(context).scaffoldBackgroundColor,
+            child: 
+            Center(
+              child:  Text('No Results found..!', style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor),),
+            ));
           }
         }
-        return const Center(
-          child: CircularProgressIndicator(),
+        return Container(color: Theme.of(context).scaffoldBackgroundColor,
+          child: Center(
+          child: CircularProgressIndicator(color: Theme.of(context).hintColor,)),
         );
       },
     );

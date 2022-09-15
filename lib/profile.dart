@@ -98,7 +98,7 @@ Future<String> uploadFile(_image) async {
         backgroundColor: Colors.blueGrey,
         centerTitle: true,
         title: Text(Globalname, textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).scaffoldBackgroundColor)),
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70)),
         leading: IconButton(icon: Icon(Icons.arrow_back),
         onPressed: () => Navigator.of(context).pop(),
         ),
@@ -162,7 +162,7 @@ SizedBox(height: 10,),
               ),
             
             )),
-            Text("Tap this image to change profile pic...!", style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey, fontSize: 10),)
+            Text("Tap this image to change profile pic...!", style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor, fontSize: 10),)
       ]),
 
 //gap btw borders
@@ -174,15 +174,22 @@ SizedBox(height: 10,),
               Padding(padding: const EdgeInsets.only(top: 10, left: 20, right: 20),
                child:
                TextFormField(
+                cursorColor: Theme.of(context).hintColor,
                 controller: unameController,
                 keyboardType: TextInputType.text,
-                style: const TextStyle(
+                style:  TextStyle(
+                  color: Theme.of(context).hintColor,
                   fontSize: 16,
-                  fontFamily: 'BrandonLI'
+                  fontFamily: 'BrandonBI'
                 ),
                 textCapitalization: TextCapitalization.words,
                 decoration:  InputDecoration(
-                  hintText: Globalname,
+                  hintStyle: TextStyle(
+                  color: Theme.of(context).hintColor,
+                  fontSize: 16,
+                  fontFamily: 'BrandonLI'
+                  ),
+                  hintText: snapshot.data['name'],
                   prefixIcon: Icon(Icons.person),
                   border: UnderlineInputBorder(),
                 ),
@@ -192,15 +199,22 @@ SizedBox(height: 10,),
               Padding(padding: const EdgeInsets.only(top: 10, left: 20, right: 20, bottom: 10),
                child:
                TextFormField(
+                cursorColor: Theme.of(context).hintColor,
                 controller: aboutController,
                 keyboardType: TextInputType.text,
-                style: const TextStyle(
+                style:  TextStyle(
+                  color: Theme.of(context).hintColor,                
                   fontSize: 16,
-                  fontFamily: 'BrandonLI'
+                  fontFamily: 'BrandonBI'
                 ),
                 textCapitalization: TextCapitalization.words,
                 decoration:  InputDecoration(
-                  hintText: Globalabout,
+                  hintStyle: TextStyle(
+                  color: Theme.of(context).hintColor,
+                  fontSize: 16,
+                  fontFamily: 'BrandonLI'
+                  ),
+                  hintText: snapshot.data['about'],
                   prefixIcon: Icon(Icons.border_color),
                   border: UnderlineInputBorder(),
                 ),

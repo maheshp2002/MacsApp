@@ -16,6 +16,7 @@ import 'package:macsapp/homepage/homeScreen.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:photo_view/photo_view.dart';
 
 
 class chat extends StatefulWidget {
@@ -374,25 +375,25 @@ ClearMessage() async{
                      PopupMenuItem<Menu>(
                       value: Menu.itemDelete,
                       child: Row(children: [
-                        Icon(Icons.delete, color: Colors.blueGrey,),
+                        Icon(Icons.delete, color: Theme.of(context).hintColor,),
                         Text("Delete message",
-                        style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold))
+                        style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold))
                       ]),
                     ),
                      PopupMenuItem<Menu>(
                       value: Menu.itemClearMsg,
                       child: Row(children: [
-                        Icon(Icons.delete_sweep, color: Colors.blueGrey,),
+                        Icon(Icons.delete_sweep, color: Theme.of(context).hintColor,),
                         Text("Clear all message",
-                        style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold))
+                        style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold))
                       ]),
                     ),                    
                     PopupMenuItem<Menu>(
                       value: Menu.itemClose,
                       child: Row(children: [
-                        Icon(Icons.close, color: Colors.blueGrey,),
+                        Icon(Icons.close, color: Theme.of(context).hintColor,),
                         Text("Close",
-                        style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold))
+                        style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold))
                       ]),
                     ),
                   ]),
@@ -422,7 +423,7 @@ ClearMessage() async{
         Row(children: [
         InkWell(
         onTap: () => Navigator.push(context, MaterialPageRoute(
-        builder: (context)=> PhotoView(url: snapshot.data['img'], date: snapshot.data['name']))),
+        builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name']))),
         child:  ClipRRect(
          borderRadius: BorderRadius.circular(100),child: 
         Image.network(snapshot.data['img'], width: 40, height: 40, fit: BoxFit.fill,))
@@ -462,7 +463,7 @@ ClearMessage() async{
           IconButton(onPressed: (){
 
           }, 
-          icon: Icon(CupertinoIcons.smiley, color: Colors.blueGrey,)),
+          icon: Icon(CupertinoIcons.smiley, color: Theme.of(context).hintColor,)),
 
           SizedBox(width: 5,),
 
@@ -470,7 +471,7 @@ ClearMessage() async{
 
           }, 
           icon: //cat != 2 ? 
-          Icon(FontAwesomeIcons.upload, color: Colors.blueGrey,)
+          Icon(FontAwesomeIcons.upload, color: Theme.of(context).hintColor,)
           // : isloading == false ?
           // ClipRRect( 
           //   child: Image.file(
@@ -506,7 +507,7 @@ ClearMessage() async{
           IconButton(onPressed: (){
 
           }, 
-          icon: Icon(Icons.send, color: Colors.blueGrey,)),            
+          icon: Icon(Icons.send, color: Theme.of(context).hintColor,)),            
 
         ]);
         }
@@ -628,7 +629,7 @@ ClearMessage() async{
             });
 
           }, 
-          icon: Icon(CupertinoIcons.smiley, color: Colors.blueGrey,)),
+          icon: Icon(CupertinoIcons.smiley, color: Theme.of(context).hintColor,)),
 
           SizedBox(width: 5,),
 // //.........................................................................................................
@@ -709,7 +710,7 @@ ClearMessage() async{
 
           }, 
           icon: cat != 2 ? 
-          Icon(FontAwesomeIcons.upload, color: Colors.blueGrey,)
+          Icon(FontAwesomeIcons.upload, color: Theme.of(context).hintColor)
           : isloading == false ?
           isImage == true ?          
           ClipRRect( 
@@ -721,7 +722,7 @@ ClearMessage() async{
               ),)
           : Text(pickfile!.name, textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 10, color: Colors.blueGrey,fontWeight: FontWeight.bold))
-          : CircularProgressIndicator(color: Colors.blueGrey,)
+          : CircularProgressIndicator(color: Theme.of(context).hintColor,)
           ),
 //.........................................................................................................
           SizedBox(width: 5,),
@@ -819,7 +820,7 @@ ClearMessage() async{
 
                 }         
           },
-          icon: Icon(Icons.send, color: Colors.blueGrey,)),            
+          icon: Icon(Icons.send, color: Theme.of(context).hintColor,)),            
 
         ])
          ]);
@@ -860,7 +861,7 @@ Showbottomsheet (context){
                     IconButton(onPressed: () async {
                       Navigator.pop(context);
                     }, 
-                    icon: Icon(Icons.keyboard_arrow_down, color: Colors.blueGrey)
+                    icon: Icon(Icons.keyboard_arrow_down, color: Theme.of(context).hintColor)
                     ),),
 
                     Row(
@@ -1147,14 +1148,14 @@ class _chat1State extends State<chat1> {
           Image.asset("assets/sticker/" + name + ".gif", width: 130, height: 130,)
           ),
           content: Text(date, textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 15, color: Colors.blueGrey,fontWeight: FontWeight.bold)),
+          style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 15, color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),
           actions: <Widget>[
           Center(child:
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
               primary: Theme.of(context).scaffoldBackgroundColor
              ),               
-            child: const Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            child:  Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
             onPressed: () {  
               Navigator.of(context).pop();  
             },  
@@ -1169,16 +1170,16 @@ class _chat1State extends State<chat1> {
         builder: (context) => AlertDialog(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           title:  Text(msg, textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonBI', fontSize: 25, color: Colors.blueGrey,fontWeight: FontWeight.bold)),
+          style:  TextStyle(fontFamily: 'BrandonBI', fontSize: 25, color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),
           content:  Text(date, textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonLI', fontSize: 15, color: Colors.blueGrey,fontWeight: FontWeight.bold)),          
+          style:  TextStyle(fontFamily: 'BrandonLI', fontSize: 15, color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),          
           actions: <Widget>[
           Center(child:
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
               primary: Theme.of(context).scaffoldBackgroundColor
              ),               
-            child: const Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            child:  Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
             onPressed: () {  
               Navigator.of(context).pop();  
             },  
@@ -1415,21 +1416,21 @@ class _chat1State extends State<chat1> {
                         child:
                         Row(
                         children: [
-                        Icon(Icons.file_download, color: Colors.blueGrey, size: 30,),
+                        Icon(Icons.file_download, color: Theme.of(context).hintColor, size: 30,),
                         SizedBox(width: 10),
                         Expanded(child:
-                        Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: Colors.blueGrey,fontSize: 10,fontFamily: 'BrandonLI'),))]))
+                        Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 10,fontFamily: 'BrandonLI'),))]))
                         )
                         
                         : InkWell(
                         onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["msg"]),
                         child:                          
-                        Text(snapshot.data.docs[index]["msg"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonBI'),)),
+                        Text(snapshot.data.docs[index]["msg"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 15,fontFamily: 'BrandonBI'),)),
                         
                         SizedBox(width: 80, child:
                         Row(mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                        Text(snapshot.data.docs[index]["time"], style: TextStyle(color: Colors.blueGrey, fontSize: 10,fontFamily: 'BrandonLI'),)],),),
+                        Text(snapshot.data.docs[index]["time"], style: TextStyle(color: Theme.of(context).hintColor, fontSize: 10,fontFamily: 'BrandonLI'),)],),),
 
                         ],)
                       ),
@@ -1532,17 +1533,17 @@ class _chat1State extends State<chat1> {
 
 
 //PhotoView for profile............................................................................................
-class PhotoView extends StatefulWidget {
+class photoView extends StatefulWidget {
 
   final date;
   final url; 
-  PhotoView({Key? key,this.date,this.url}) : super(key: key);
+  photoView({Key? key,this.date,this.url}) : super(key: key);
 
   @override
-  PhotoViewState createState() => PhotoViewState();
+  photoViewState createState() => photoViewState();
 }
 
-class PhotoViewState extends State<PhotoView>{
+class photoViewState extends State<photoView>{
 
   double? progress = null;
 
@@ -1592,8 +1593,9 @@ class PhotoViewState extends State<PhotoView>{
 
       body: Container(
         color: Colors.black,
-        child: Center(child:
-        Image.network(widget.url)),
+        child: Center(child: PhotoView(
+        imageProvider:
+        NetworkImage(widget.url,))),
         ),
   ); 
       
@@ -1689,8 +1691,9 @@ class PhotoView2State extends State<PhotoView2>{
         child: Center(child:
 
         
-        widget.isImage == true ?
-        Image.network(widget.url)
+        widget.isImage == true ? PhotoView(
+        imageProvider:
+        NetworkImage(widget.url))
         : Column(mainAxisAlignment: MainAxisAlignment.center,
         children: [
         Icon(Icons.folder_open, size: 200, color: Colors.white),

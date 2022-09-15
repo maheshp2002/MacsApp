@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:macsapp/chats/chat.dart';
 
 class Requests extends StatefulWidget {
 
@@ -67,17 +68,24 @@ class RequestsState extends State<Requests>{
                     return  Card(elevation: 15,
                     child:
                     ListTile(
-                      title: Text(snapshot.data.docs[index]['Requestname'],style: const TextStyle(fontFamily: 'BrandonLI',
-                          color: Colors.blueGrey,
+                      title: Text(snapshot.data.docs[index]['Requestname'],style:  TextStyle(fontFamily: 'BrandonLI',
+                          color: Theme.of(context).hintColor,
                           fontSize: 15,
                         ),),
-                      subtitle: Text(snapshot.data.docs[index]['Requestabout'],style: const TextStyle(fontFamily: 'BrandonLI',
-                          color: Colors.blueGrey,
+                      subtitle: Text(snapshot.data.docs[index]['Requestabout'],style:  TextStyle(fontFamily: 'BrandonLI',
+                          color: Theme.of(context).hintColor,
                           fontSize: 15,
                         ),),
-                      leading:  ClipRRect(
+                      leading:  InkWell(
+                      child: ClipRRect(
                       borderRadius: BorderRadius.circular(100),child: 
                       Image.network(snapshot.data.docs[index]['Requestimg'], width: 50, height: 50,)),
+                      
+                      onTap: () {
+                      Navigator.push(context, MaterialPageRoute(
+                      builder: (context)=> photoView(url: snapshot.data.docs[index]['Requestimg'], date: snapshot.data.docs[index]['Requestname'])));                        
+                      },
+                      ),
                       trailing:  
                       SizedBox(width: 150, child:
                       Row(children: [  

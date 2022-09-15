@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:macsapp/homepage/homeScreen.dart';
@@ -16,22 +17,22 @@ Future<void> main() async{
 
 class MyApp extends StatefulWidget {
   @override
-  _MyAppState createState() => _MyAppState();
+  MyAppState createState() => MyAppState();
 /// InheritedWidget style accessor to our State object.
 /// We can call this static method from any descendant context to find our
 /// State object and switch the themeMode field value & call for a rebuild.
-static _MyAppState of(BuildContext context) =>
-      context.findAncestorStateOfType<_MyAppState>()!;
+static MyAppState of(BuildContext context) =>
+      context.findAncestorStateOfType<MyAppState>()!;
 }
-
+  late var user;
 /// Our State object
-class _MyAppState extends State<MyApp> {
+class MyAppState extends State<MyApp> {
   /// 1) our themeMode "state" field
   ThemeMode _themeMode = ThemeMode.system;
+  final FirebaseAuth auth = FirebaseAuth.instance;
   
  @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     Future.delayed(const Duration(milliseconds: 1), () async{
     SharedPreferences prefs = await SharedPreferences.getInstance(); 
@@ -40,15 +41,26 @@ class _MyAppState extends State<MyApp> {
     isDark = prefs.getBool('isDark');
     });
     });
+    getCurrentUser();
   } 
+    Future getCurrentUser() async {
+    setState(() {
+        
+    user =  FirebaseAuth.instance.currentUser ?? "notSigned";
+    });
+    // print(user);
+    // print("#######################################");
+    return user;}
+    
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'MacsApp',
       theme: ThemeData(),
       darkTheme: ThemeData.dark(),
       themeMode: _themeMode, // 2) ← ← ← use "state" field here //////////////
-      home: Splash(),
+      home: 
+      Splash(),
     );
   }
 
@@ -138,13 +150,14 @@ class _RestartWidgetState extends State<RestartWidget> {
 }
 
 
-
+//Theme........................................................................................................
 class ThemeClass{
  
   static ThemeData lightTheme = ThemeData(
     scaffoldBackgroundColor: Colors.white,
+    primarySwatch: Colors.blueGrey,
+    hintColor: Colors.blueGrey,
     colorScheme: ColorScheme.light(),
-    
     cardColor: Colors.grey.shade200,
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.blueGrey,
@@ -153,7 +166,9 @@ class ThemeClass{
  
   static ThemeData darkTheme = ThemeData(
     scaffoldBackgroundColor: Colors.black45,
+    primarySwatch: Colors.blueGrey,
     cardColor: Colors.black,
+    hintColor: Colors.white60,
     colorScheme: ColorScheme.dark(),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.black,

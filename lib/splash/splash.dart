@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:macsapp/homepage/homeScreen.dart';
 import 'package:macsapp/main.dart';
 
 
@@ -16,7 +17,8 @@ class Splash extends StatefulWidget {
 
   _navigatetoHome()async{
     await Future.delayed(const Duration(milliseconds: 3000), () {});
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp2()));
+    user == "notSigned" ? Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyApp2()))
+    : Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => homeScreen()));
   }
 
   @override
@@ -54,8 +56,8 @@ class Splash extends StatefulWidget {
         child: 
 
       Row(mainAxisAlignment: MainAxisAlignment.center,
-        children: const [ 
-        Text("from - Broken Code\n ", textAlign: TextAlign.center, style: TextStyle(fontFamily: 'BrandonL'))]),
+        children:  [ 
+        Text("from - Broken Code\n ", textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).hintColor,fontFamily: 'BrandonL'))]),
 
         ),
     );
