@@ -239,6 +239,9 @@ SizedBox(height: 10,),
               ),     
               
               ElevatedButton(
+              style: ElevatedButton.styleFrom(
+              primary: Colors.blueGrey
+             ),
               onPressed: () async{
               setState(() {
               isloading = true;
@@ -247,7 +250,7 @@ SizedBox(height: 10,),
               await saveImages(_image);
 
               SharedPreferences prefs = await SharedPreferences.getInstance();
-              await prefs.setBool('validation', true);  
+              await prefs.setBool('validation', true);                
 
               setState(() {
               isloading = false;

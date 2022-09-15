@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:macsapp/homepage/homeScreen.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
@@ -94,11 +95,15 @@ Future<String> uploadFile(_image) async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.blueGrey,
+        centerTitle: true,
+        title: Text(Globalname, textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).scaffoldBackgroundColor)),
         leading: IconButton(icon: Icon(Icons.arrow_back),
         onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: isLoading == true ? Center(child: CircularProgressIndicator(color: Colors.blueGrey,))
       : StreamBuilder(
       stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!).snapshots(),
@@ -177,14 +182,14 @@ SizedBox(height: 10,),
                 ),
                 textCapitalization: TextCapitalization.words,
                 decoration:  InputDecoration(
-                  hintText: 'Name',
+                  hintText: Globalname,
                   prefixIcon: Icon(Icons.person),
                   border: UnderlineInputBorder(),
                 ),
               ),
               ), 
 
-              Padding(padding: const EdgeInsets.only(top: 10, left: 20, right: 20),
+              Padding(padding: const EdgeInsets.only(top: 10, left: 20, right: 20, bottom: 10),
                child:
                TextFormField(
                 controller: aboutController,
@@ -195,14 +200,17 @@ SizedBox(height: 10,),
                 ),
                 textCapitalization: TextCapitalization.words,
                 decoration:  InputDecoration(
-                  hintText: 'About',
+                  hintText: Globalabout,
                   prefixIcon: Icon(Icons.border_color),
                   border: UnderlineInputBorder(),
                 ),
               ),
               ),     
               
-              ElevatedButton(
+            ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              primary: Colors.blueGrey
+             ),  
               onPressed: () async{
 
               setState(() {

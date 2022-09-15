@@ -17,12 +17,26 @@ class homeScreen extends StatefulWidget {
   homeScreenState createState() => homeScreenState();
 }
 
+late bool? isDark;
+
 class homeScreenState extends State<homeScreen>{
   User? user = FirebaseAuth.instance.currentUser;
   final collectionReference = FirebaseFirestore.instance;
 
   @override
+  void initState() {
+    super.initState();
+   Future.delayed(const Duration(milliseconds: 10), () async{
+   SharedPreferences prefs = await SharedPreferences.getInstance(); 
+   setState(() {
+   isDark = prefs.getBool('isDark');
+   });
+   });
+  }  
+
+  @override
   Widget build(BuildContext context) {
+
   return Scaffold(
   floatingActionButton: StreamBuilder(
       stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!).snapshots(),
@@ -49,6 +63,32 @@ class homeScreenState extends State<homeScreen>{
 
   drawer: NavDrawer(),
   appBar: AppBar(
+      actions: [
+        IconButton(onPressed: () async{
+
+          SharedPreferences prefs = await SharedPreferences.getInstance();   
+          
+          // print("###################################################");
+
+          if (isDark == false){
+          await prefs.setBool('isDark', true);  
+          MyApp.of(context).changeTheme(ThemeMode.dark);     
+          setState(() {
+            isDark = true;
+          });      
+          } else {
+          await prefs.setBool('isDark', false);  
+          MyApp.of(context).changeTheme(ThemeMode.light);  
+          setState(() {
+            isDark = false;
+          });  
+          }
+          
+
+
+        }, icon: isDark == true ? Icon(Icons.dark_mode,) : Icon(Icons.light_mode,)
+        )
+      ],
         backgroundColor: Colors.blueGrey,
         leading: Builder(
           builder: (BuildContext context) {
@@ -71,7 +111,7 @@ class homeScreenState extends State<homeScreen>{
         elevation: 5.0,
         centerTitle: true,
   ),
-  backgroundColor: Colors.white,
+  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 	body: StreamBuilder(
       stream: FirebaseFirestore.instance.collection(user!.email! + "friends")
           .snapshots(),
@@ -187,13 +227,13 @@ class homeScreenState extends State<homeScreen>{
      await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: Color.fromARGB(223, 255, 254, 254),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor ,
           title: const Text("Do you want to remove this friend?", textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold)),
           actions: <Widget>[
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Color.fromARGB(223, 255, 254, 254)
+              primary: Theme.of(context).scaffoldBackgroundColor 
              ),               
             child: const Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () {  
@@ -202,7 +242,7 @@ class homeScreenState extends State<homeScreen>{
           ),  
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Color.fromARGB(223, 255, 254, 254)
+              primary: Theme.of(context).scaffoldBackgroundColor 
              ),            
             child: const Text('Remove',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () async { 
@@ -340,13 +380,13 @@ class _NavDrawerState extends State<NavDrawer> {
      await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: const Color.fromARGB(223, 255, 254, 254),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor ,
           title: const Text("Do you want to logout?", textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold)),
           actions: <Widget>[
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Color.fromARGB(223, 255, 254, 254)
+              primary: Theme.of(context).scaffoldBackgroundColor 
              ),               
             child: const Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () {  
@@ -355,7 +395,7 @@ class _NavDrawerState extends State<NavDrawer> {
           ),  
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Color.fromARGB(223, 255, 254, 254)
+              primary: Theme.of(context).scaffoldBackgroundColor 
              ),               
             child: const Text('Logout',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () async { 
@@ -363,7 +403,8 @@ class _NavDrawerState extends State<NavDrawer> {
             FirebaseService service = new FirebaseService();
             await service.signOutFromGoogle();
             SharedPreferences prefs = await SharedPreferences.getInstance();
-            await prefs.setBool('validation', false);         
+            await prefs.setBool('validation', false); 
+            await  prefs.setBool('isDark', false);        
             RestartWidget.restartApp(context);
 
             Navigator.of(context).pop();  
@@ -411,7 +452,7 @@ class UsersListState extends State<UsersList>{
   Widget build(BuildContext context) {
     return Scaffold(
   appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor ,
         actions: [
           new IconButton(
           icon: new Icon(Icons.search, color: Colors.grey,),

@@ -75,10 +75,13 @@ class RequestsState extends State<Requests>{
                           color: Colors.blueGrey,
                           fontSize: 15,
                         ),),
-                      leading: Image.network(snapshot.data.docs[index]['Requestimg'], width: 50, height: 50,),
-                      trailing: Expanded(child: 
+                      leading:  ClipRRect(
+                      borderRadius: BorderRadius.circular(100),child: 
+                      Image.network(snapshot.data.docs[index]['Requestimg'], width: 50, height: 50,)),
+                      trailing:  
                       SizedBox(width: 150, child:
-                      Row(children: [                     
+                      Row(children: [  
+                      Expanded(child:                   
                       ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         primary: Colors.blueGrey
@@ -121,10 +124,11 @@ class RequestsState extends State<Requests>{
                                     backgroundColor: Colors.blueGrey,  
                                     textColor: Colors.white  
                                 );                       
-                      }),
+                      })),
 
                       SizedBox(width: 10,),
 
+                      Expanded(child:
                       ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         primary: Colors.white
@@ -151,9 +155,9 @@ class RequestsState extends State<Requests>{
                                     backgroundColor: Colors.blueGrey,  
                                     textColor: Colors.white  
                                 );                       
-                      })                      
+                      }))                      
                       ],),
-            )),),);
+            )),);
               })]);           
         }
       })    

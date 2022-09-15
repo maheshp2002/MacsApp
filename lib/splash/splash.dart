@@ -24,7 +24,7 @@ class Splash extends StatefulWidget {
     return Scaffold(
       body: Container(
         //color: Colors.blueGrey.shade900,
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -50,12 +50,12 @@ class Splash extends StatefulWidget {
         ),
       ),
       ),
-      bottomSheet: Container(color: Colors.white,
+      bottomSheet: Container(color: Theme.of(context).scaffoldBackgroundColor,
         child: 
 
       Row(mainAxisAlignment: MainAxisAlignment.center,
         children: const [ 
-        Text("from - Broken Code\n ", textAlign: TextAlign.center, style: TextStyle(color: Colors.black38, fontFamily: 'BrandonL'))]),
+        Text("from - Broken Code\n ", textAlign: TextAlign.center, style: TextStyle(fontFamily: 'BrandonL'))]),
 
         ),
     );

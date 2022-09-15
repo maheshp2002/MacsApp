@@ -43,7 +43,7 @@ class _GoogleSignInState extends State<GoogleSignIn> {
         label: Text(
           Constants.textSignInGoogle,
           style: TextStyle(
-              color: Constants.kBlackColor, fontWeight: FontWeight.bold),
+              color: Colors.blueGrey, fontWeight: FontWeight.bold),
         ),
         style: ButtonStyle(
             backgroundColor:

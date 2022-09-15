@@ -58,11 +58,6 @@ class chatState extends State<chat> {
     handleScroll();
   }  
 
-  @override
-  void dispose() {
-    scrollController.removeListener(() {});
-    super.dispose();
-  }
 
 //Show/hide floating button..........................................................................................
   
@@ -78,17 +73,22 @@ class chatState extends State<chat> {
     });
   }
 
+  @override
+  void dispose() {
+    scrollController.removeListener(() {});
+    super.dispose();
+  }
 //Scroll Controller..........................................................................................
   
   void handleScroll() async {
     scrollController.addListener(() {
       if (scrollController.position.userScrollDirection ==
-          ScrollDirection.reverse) {
+          ScrollDirection.forward) {
           showFloationButton();
           
       }
       if (scrollController.position.userScrollDirection ==
-          ScrollDirection.forward) {
+          ScrollDirection.reverse) {
           hideFloationButton();
       }
     });
@@ -327,20 +327,27 @@ ClearMessage() async{
     return Scaffold(
       floatingActionButton:  Visibility(
       visible: _show,
-      child:Container(
-      height: 50.0,
-      width: 50.0,
+      child:Container(padding: EdgeInsets.only(bottom: 40),
+      height: 85.0,
+      width: 85.0,
       //padding: const EdgeInsets.only(bottom: 50.0),
-      child: FloatingActionButton(
-        child: Icon(Icons.keyboard_arrow_down, color: Colors.white,),
+      child: Container(
+      child: 
+      FloatingActionButton(
+        backgroundColor: Colors.blueGrey,
+        child: Padding(padding: EdgeInsets.only(top: 3), 
+        child: 
+        Icon(Icons.keyboard_arrow_down, color: Colors.white,size: 40,)),
         onPressed: (){
-        scrollController.jumpTo(scrollController.position.maxScrollExtent);
+        scrollController.jumpTo(scrollController.position.minScrollExtent);
         setState(() {
           _show = false;
         });
         },
-      ))),
+      )))),
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
+        backgroundColor: Colors.blueGrey,
         actions: <Widget>[
           // This button presents popup menu items.
           PopupMenuButton<Menu>(
@@ -428,7 +435,7 @@ ClearMessage() async{
           }}),          
       ),
 
-      backgroundColor: Colors.white,
+      backgroundColor:  Theme.of(context).scaffoldBackgroundColor,
 
       body: SafeArea(
         child: WillPopScope(
@@ -444,18 +451,9 @@ ClearMessage() async{
                   // Sticker
                   isShowSticker ? buildSticker() : SizedBox.shrink(),
 
-                ],
-              ),
-
-              // Loading
-              //buildLoading()
-            ],
-          ),
-          onWillPop: onBackPress,
-        ),
-      ),
-
-      bottomNavigationBar: StreamBuilder(
+      Align(alignment: Alignment.bottomCenter,
+      child: 
+      StreamBuilder(
       stream: FirebaseFirestore.instance.collection(widget.id).snapshots(),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
          if (!snapshot.hasData) {  
@@ -538,7 +536,7 @@ ClearMessage() async{
                                 child: Stack(
                                 children: [ 
                                 Align(alignment: Alignment.center,child:
-                                Text(replyName, style: TextStyle(fontSize: 10,fontFamily: 'BrandonBI'),)),
+                                Text(replyName, style: TextStyle(color: Colors.blueGrey, fontSize: 10,fontFamily: 'BrandonBI'),)),
                                 Align(alignment: Alignment.centerRight,
                                 child: Container(width: 20, height: 20,
                                 child: FloatingActionButton(
@@ -565,7 +563,7 @@ ClearMessage() async{
                                 child: Stack(
                                 children: [ 
                                 Align(alignment: Alignment.center,child:
-                                Text(replyName, style: TextStyle(fontSize: 10,fontFamily: 'BrandonBI'),)),
+                                Text(replyName, style: TextStyle(color: Colors.blueGrey,fontSize: 10,fontFamily: 'BrandonBI'),)),
                                 Align(alignment: Alignment.centerRight,
                                 child: Container(width: 20, height: 20,
                                 child: FloatingActionButton(
@@ -584,7 +582,7 @@ ClearMessage() async{
                                 color: Colors.blue[50],     
                                 child: isImage == true ?  
                                 Image.network(replyMsg, width: 30, height: 30,)
-                                : Text(photoname, style: TextStyle(fontSize: 10,fontFamily: 'BrandonBI')),
+                                : Text(photoname, style: TextStyle(color: Colors.blueGrey,fontSize: 10,fontFamily: 'BrandonBI')),
                                 )])
 
                               : Column(children: [ 
@@ -593,7 +591,7 @@ ClearMessage() async{
                                 child: Stack(
                                 children: [ 
                                 Align(alignment: Alignment.center,child:
-                                Text(replyName, style: TextStyle(fontSize: 10,fontFamily: 'BrandonBI'),)),
+                                Text(replyName, style: TextStyle(color: Colors.blueGrey, fontSize: 10,fontFamily: 'BrandonBI'),)),
                                 Align(alignment: Alignment.centerRight,
                                 child: Container(width: 20, height: 20,
                                 child: FloatingActionButton(
@@ -611,7 +609,7 @@ ClearMessage() async{
                               Container(width: 200,alignment: Alignment.center,
                               color: Colors.blue[50],     
                               child:                                
-                              Text(replyMsg, style: TextStyle(fontSize: 15,fontFamily: 'BrandonLI'),)),
+                              Text(replyMsg, style: TextStyle(color: Colors.blueGrey, fontSize: 15,fontFamily: 'BrandonLI'),)),
                               ],)
                             ),);
 
@@ -826,16 +824,32 @@ ClearMessage() async{
         ])
          ]);
     
-      }})
+      }}))
+                ],
+              ),
+
+              // Loading
+              //buildLoading()
+            ],
+          ),
+          onWillPop: onBackPress,
+        ),
+      ),
+
     );
 
   }
 
 Showbottomsheet (context){
-          showBottomSheet(
+        
+          showCupertinoModalPopup<void>(
               context: context,
-              builder: (context) => Card(
-              color: Color.fromARGB(211, 255, 255, 255),
+              builder: (context) => Padding(padding: EdgeInsets.only(bottom: 70, left: 20, right: 20),
+              child: Card(elevation: 20,
+              shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15.0),
+                ),
+              color: Theme.of(context).scaffoldBackgroundColor,
               child: Container(
                 height: 150,
                 width: double.infinity,
@@ -925,11 +939,11 @@ Showbottomsheet (context){
               ],
           ),
 
-          SizedBox(height: 5,),
+          SizedBox(height: 10,),
 
           ],),
 
-        )),);  
+        )),));  
   }   
 //.........................................................................................................
 
@@ -1038,7 +1052,7 @@ Showbottomsheet (context){
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         ),
         decoration: BoxDecoration(
-            border: Border(top: BorderSide(color: Colors.grey, width: 0.5)), color: Colors.white),
+            border: Border(top: BorderSide(color: Colors.grey, width: 0.5)), color: Theme.of(context).scaffoldBackgroundColor ),
         padding: EdgeInsets.all(5),
         height: 180,
       ),
@@ -1113,6 +1127,12 @@ class _chat1State extends State<chat1> {
   User? user = FirebaseAuth.instance.currentUser;
 
 
+// void initState(){
+//   super.initState();
+//   WidgetsBinding.instance?.addPostFrameCallback((_){
+//   scrollController.jumpTo(scrollController.position.maxScrollExtent);
+//   });
+// }
 
   @override
   Widget build(BuildContext context) {
@@ -1122,7 +1142,7 @@ class _chat1State extends State<chat1> {
      await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: const Color.fromARGB(223, 255, 254, 254),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           title: Center(child: 
           Image.asset("assets/sticker/" + name + ".gif", width: 130, height: 130,)
           ),
@@ -1132,7 +1152,7 @@ class _chat1State extends State<chat1> {
           Center(child:
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Color.fromARGB(223, 255, 254, 254)
+              primary: Theme.of(context).scaffoldBackgroundColor
              ),               
             child: const Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () {  
@@ -1147,7 +1167,7 @@ class _chat1State extends State<chat1> {
      await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: const Color.fromARGB(223, 255, 254, 254),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           title:  Text(msg, textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonBI', fontSize: 25, color: Colors.blueGrey,fontWeight: FontWeight.bold)),
           content:  Text(date, textAlign: TextAlign.center,
@@ -1156,7 +1176,7 @@ class _chat1State extends State<chat1> {
           Center(child:
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Color.fromARGB(223, 255, 254, 254)
+              primary: Theme.of(context).scaffoldBackgroundColor
              ),               
             child: const Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
             onPressed: () {  
@@ -1182,6 +1202,7 @@ class _chat1State extends State<chat1> {
       else{
         return ListView(
         controller: scrollController,
+        reverse: true,
         children: [
         ListView.builder(
                   physics: const ScrollPhysics(),
@@ -1307,7 +1328,7 @@ class _chat1State extends State<chat1> {
                   child: 
                   Container(
                     color: snapshot.data.docs[index]["isSelected"] == true ?
-                   Color.fromARGB(200, 96, 125, 139) : Colors.white,
+                   Color.fromARGB(200, 96, 125, 139) : Theme.of(context).scaffoldBackgroundColor ,
                     padding: EdgeInsets.only(left: 14,right: 14,top: 10,bottom: 10),
                     child: Align(
                       alignment: (snapshot.data.docs[index]["id"] != user!.email! ? Alignment.topLeft : Alignment.topRight),
@@ -1315,7 +1336,7 @@ class _chat1State extends State<chat1> {
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
-                          color: (snapshot.data.docs[index]["id"] != user!.email! ? Colors.grey.shade200 : Colors.blue[200]),
+                          color: (snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).cardColor : Colors.blue[200]),
                         ),
                         padding: EdgeInsets.all(16),
                         child: Column(children: [                       
@@ -1334,7 +1355,7 @@ class _chat1State extends State<chat1> {
                                 Container(width: 150,alignment: Alignment.center,
                                 color: Colors.blue[100],
                                 child: 
-                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(fontSize: 10,fontFamily: 'BrandonBI'),)),
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey, fontSize: 10,fontFamily: 'BrandonBI'),)),
                                 Container(width: 150,alignment: Alignment.center,
                                 color: Colors.blue[50],
                                 child: 
@@ -1346,7 +1367,7 @@ class _chat1State extends State<chat1> {
                                 Container(width: 150,alignment: Alignment.center,
                                 color: Colors.blue[100],
                                 child: 
-                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey, fontSize: 15,fontFamily: 'BrandonBI'),)),
                                 Container(width: 150,alignment: Alignment.center,
                                 color: Colors.blue[50],
                                 child: 
@@ -1356,21 +1377,21 @@ class _chat1State extends State<chat1> {
                                 Container(width: 150,alignment: Alignment.center,
                                 color: Colors.blue[100],
                                 child:                               
-                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonBI'),)),
                                 Container(width: 150,alignment: Alignment.center,
                                 color: Colors.blue[50],
                                 child: 
-                                Text(snapshot.data.docs[index]["photoname"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonLI'),))])
+                                Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonLI'),))])
 
                                 : Column(children: [  
                                 Container(width: 150,alignment: Alignment.center,
                                 color: Colors.blue[100],
                                 child:                               
-                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonBI'),)),
                                 Container(width: 150,alignment: Alignment.center,
                                 color: Colors.blue[50],
                                 child: 
-                                Text(snapshot.data.docs[index]["replyMsg"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonLI'),)),
+                                Text(snapshot.data.docs[index]["replyMsg"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonLI'),)),
                               ],)
                             ),)
                           ]else...[
@@ -1397,18 +1418,18 @@ class _chat1State extends State<chat1> {
                         Icon(Icons.file_download, color: Colors.blueGrey, size: 30,),
                         SizedBox(width: 10),
                         Expanded(child:
-                        Text(snapshot.data.docs[index]["photoname"], style: TextStyle(fontSize: 10,fontFamily: 'BrandonLI'),))]))
+                        Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: Colors.blueGrey,fontSize: 10,fontFamily: 'BrandonLI'),))]))
                         )
                         
                         : InkWell(
                         onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["msg"]),
                         child:                          
-                        Text(snapshot.data.docs[index]["msg"], style: TextStyle(fontSize: 15,fontFamily: 'BrandonBI'),)),
+                        Text(snapshot.data.docs[index]["msg"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonBI'),)),
                         
                         SizedBox(width: 80, child:
                         Row(mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                        Text(snapshot.data.docs[index]["time"], style: TextStyle(fontSize: 10,fontFamily: 'BrandonLI'),)],),),
+                        Text(snapshot.data.docs[index]["time"], style: TextStyle(color: Colors.blueGrey, fontSize: 10,fontFamily: 'BrandonLI'),)],),),
 
                         ],)
                       ),
