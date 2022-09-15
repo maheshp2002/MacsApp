@@ -92,6 +92,7 @@ Future<String> uploadFile(_image) async {
   File _image = File(''); // Used only if you need a single picture
   late bool? Validation;
   bool isloading = false;
+  final collectionReference = FirebaseFirestore.instance;
 
   @override
   void initState(){
@@ -243,10 +244,27 @@ SizedBox(height: 10,),
               primary: Colors.blueGrey
              ),
               onPressed: () async{
+              String imgUrl = "";
+
               setState(() {
               isloading = true;
               });
 
+              try{
+                    await collectionReference.collection("Users").doc(user!.email!).get()
+                    .then((snapshot) {
+                      setState(() {
+                      imgUrl = snapshot.get('img');                
+                      });
+                });  
+
+              deleteFile(imgUrl);
+            
+            } catch (e){
+                  debugPrint("error");
+            } 
+
+              
               await saveImages(_image);
 
               SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -266,7 +284,13 @@ SizedBox(height: 10,),
       ],),
     );
   }
-
+  Future<void> deleteFile(String url) async {
+  try {
+    await FirebaseStorage.instance.refFromURL(url).delete();
+  } catch (e) {
+    print("Error deleting db from cloud: $e");
+  }
+}
 Future<File> fileFromImageUrl() async {
     final response = await http.get(Uri.parse('https://firebasestorage.googleapis.com/v0/b/macsapp-f2a0f.appspot.com/o/App%20file%2Fdefault%2Fdownload.png?alt=media&token=ae634acf-dc30-4228-a071-587d9007773e'));
 
