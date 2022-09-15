@@ -42,22 +42,15 @@ class chatState extends State<chat> {
   var dateFormat = DateFormat(' yyyy-MM-dd - hh:mm a');
   PlatformFile? pickfile;
   bool isBottomSheet = false;
-  //TextEditingController messageController =  TextEditingController();
-  //final collectionReference = FirebaseFirestore.instance;
 
-  ValueNotifier<bool> reply = ValueNotifier(false);
-  bool isSelect = false;
-  late String image;
-  bool? value = false;
-  User? user = FirebaseAuth.instance.currentUser;
   int cat = 1;
-  //late String image;
+  late String image;
   bool isShowSticker = false;
   bool _show = false;
   
   
 
- // User? user = FirebaseAuth.instance.currentUser;
+  User? user = FirebaseAuth.instance.currentUser;
 //..............................................................................................................
 
   @override
@@ -192,55 +185,7 @@ Future<String> uploadFile(_image) async {
   @override
   Widget build(BuildContext context) {
 
-//stickerview......................................................................................................
-   _sticker(String date, String name)  async{ 
-     await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          title: Center(child: 
-          Image.asset("assets/sticker/" + name + ".gif", width: 130, height: 130,)
-          ),
-          content: Text(date, textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 15, color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),
-          actions: <Widget>[
-          Center(child:
-          ElevatedButton(  
-            style: ElevatedButton.styleFrom(
-              primary: Theme.of(context).scaffoldBackgroundColor
-             ),               
-            child:  Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
-            onPressed: () {  
-              Navigator.of(context).pop();  
-            },  
-          )),  
-          ],
-        ));
-  } 
-//stickerview......................................................................................................
-   _messageView(String date, String msg)  async{ 
-     await showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          title:  Text(msg, textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonBI', fontSize: 25, color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),
-          content:  Text(date, textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonLI', fontSize: 15, color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),          
-          actions: <Widget>[
-          Center(child:
-          ElevatedButton(  
-            style: ElevatedButton.styleFrom(
-              primary: Theme.of(context).scaffoldBackgroundColor
-             ),               
-            child:  Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
-            onPressed: () {  
-              Navigator.of(context).pop();  
-            },  
-          )),  
-          ],
-        ));
-  } 
+
 // selectFile() async {
 //   final result = await FilePicker.platform.pickFiles(allowMultiple: false);
 //   if(result == null) return;
@@ -501,344 +446,7 @@ ClearMessage() async{
                 children: <Widget>[
                   // List of messages
                   Expanded(child: 
-//....................................................................................................................
-     StreamBuilder(
-      stream: FirebaseFirestore.instance.collection(Globalid).orderBy("sortTime").snapshots(),
-      builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
-         if (!snapshot.hasData) {   
-        return  Center(child: 
-        Column(mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-          const Text("Noting is here!", style: TextStyle(color: Colors.grey, fontSize: 20, fontFamily: 'BrandonLI') )
-          ],));
-        }
-
-      else{
-        return ListView(
-        controller: scrollController,
-        reverse: true,
-        children: [
-        ListView.builder(
-                  physics: const ScrollPhysics(),
-                  padding: const EdgeInsets.all(5),
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  itemCount: snapshot.data.docs.length,        
-                  itemBuilder: (BuildContext context, int index) {
-
-                  return 
-                Stack(
-                  children: [
-                                 
-                  //GestureDetector(
-                
-                // onHorizontalDragEnd: (DragEndDetails details) async{
-                //   if (details.primaryVelocity! > 0) {
-
-                //   if(snapshot.data.docs[index]["cat"] == 1){    
-                //     setState(() {
-                      
-                //         reply = ValueNotifier<bool>(true);
-                //         replyMsg = snapshot.data.docs[index]["sticker"];
-                //         replyName = snapshot.data.docs[index]["name"];   
-                //         category = 1;                                       
-                //     });                
-                //         Fluttertoast.showToast(  
-                //                     msg:"Replying to sticker \n double tap on message to view.!",  
-                //                     toastLength: Toast.LENGTH_LONG,  
-                //                     gravity: ToastGravity.BOTTOM,  
-                //                     backgroundColor: Colors.blueGrey,  
-                //                     textColor: Colors.white); 
-
-                //   } else if(snapshot.data.docs[index]["cat"] == 2){
-                //     setState(() {
-                      
-                //          reply = ValueNotifier<bool>(true);
-                //         replyMsg = snapshot.data.docs[index]["photo"];
-                //         replyName = snapshot.data.docs[index]["name"];  
-                //         category = 2;                                        
- 
-                //     });
-                //         Fluttertoast.showToast(  
-                //                     msg:"Replying to photo \n double tap on message to view.!",  
-                //                     toastLength: Toast.LENGTH_LONG,  
-                //                     gravity: ToastGravity.BOTTOM,  
-                //                     backgroundColor: Colors.blueGrey,  
-                //                     textColor: Colors.white);                     
-                //   } else {
-                //     setState(() {
-                      
-                //         reply = ValueNotifier<bool>(true);
-                //         replyMsg = snapshot.data.docs[index]["msg"];
-                //         replyName = snapshot.data.docs[index]["name"];   
-                //         category = 3;   
-                //     });
-                //         Fluttertoast.showToast(  
-                //                     msg:"Replying to " + replyMsg.toString() + "\n double tap on message to view.!",  
-                //                     toastLength: Toast.LENGTH_LONG,  
-                //                     gravity: ToastGravity.BOTTOM,  
-                //                     backgroundColor: Colors.blueGrey,  
-                //                     textColor: Colors.white);                     
-                //   }                 
-                //   }
-                // if (details.primaryVelocity! < 0) {
-
-                //     setState(() {
-                //         reply = ValueNotifier<bool>(false);
-                //         replyMsg = "";
-                //         replyName = "";     
-                //     });
-                //   }
-                  
-                //   },
-                  
-                //  child: 
-                 InkWell(
-                  onLongPress: () async {
-                  if (snapshot.data.docs[index]["id"] == user!.email!){
-                    if(snapshot.data.docs[index]["isSelected"] == true){
-                     
-                     for (var i = 0 ; i <= growableList.length - 1 ; i++){
-                     await FirebaseFirestore.instance.collection(Globalid).doc(growableList[i]).update({
-                        'isSelected': false                
-                      });  
-                     }
-                     setState(() {                    
-                     growableList.clear();
-                       
-                     });
-
-                    }  
-                  }                 
-                  },                    
-                  onDoubleTap: () async{ 
-                  if (snapshot.data.docs[index]["id"] == user!.email!){
-
-                    if(snapshot.data.docs[index]["isSelected"] == true){
-
-                     await FirebaseFirestore.instance.collection(Globalid).doc(snapshot.data.docs[index].id).update({
-                        'isSelected': false                
-                      });  
-
-                     setState(() {                    
-                     growableList.remove(snapshot.data.docs[index].id);
-                       
-                     });
-
-                    } else {
-
-                     await FirebaseFirestore.instance.collection(Globalid).doc(snapshot.data.docs[index].id).update({
-                        'isSelected': true                
-                      });  
-
-                    setState(() {
-                      growableList.add(snapshot.data.docs[index].id);
-                    });                   
-                    
-                    }
-                    }
-                  },
-
-                  child: 
-                  Container(
-                    color: snapshot.data.docs[index]["isSelected"] == true ?
-                   Color.fromARGB(200, 96, 125, 139) : Theme.of(context).scaffoldBackgroundColor ,
-                    padding: EdgeInsets.only(left: 14,right: 14,top: 10,bottom: 10),
-                    child: Align(
-                      alignment: (snapshot.data.docs[index]["id"] != user!.email! ? Alignment.topLeft : Alignment.topRight),
-                      child: 
-                      Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(20),
-                          color: (snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).cardColor : Colors.blue[200]),
-                        ),
-                        padding: EdgeInsets.all(16),
-                        child: Column(children: [                       
-
-                          if(snapshot.data.docs[index]["reply"] == true)...[
-                            SizedBox(
-                            width: 150,                            
-                            child: Container(
-                            margin: const EdgeInsets.all(5.0),
-                            decoration: BoxDecoration(
-                              border: Border.all(color: Colors.blue, width: 2)
-                            ),    
-                              child: 
-                               snapshot.data.docs[index]["cat1"] == 1 ?  
-                               Column(children: [
-                                Container(width: 150,alignment: Alignment.center,
-                                color: Colors.blue[100],
-                                child: 
-                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey, fontSize: 10,fontFamily: 'BrandonBI'),)),
-                                Container(width: 150,alignment: Alignment.center,
-                                color: Colors.blue[50],
-                                child: 
-                                Image.asset("assets/sticker/" + snapshot.data.docs[index]["replyMsg"] + ".gif", width: 30, height: 30,))])
-
-                                : snapshot.data.docs[index]["cat1"] == 2 ?
-                                snapshot.data.docs[index]["isImage"] == true ?
-                                Column(children: [
-                                Container(width: 150,alignment: Alignment.center,
-                                color: Colors.blue[100],
-                                child: 
-                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey, fontSize: 15,fontFamily: 'BrandonBI'),)),
-                                Container(width: 150,alignment: Alignment.center,
-                                color: Colors.blue[50],
-                                child: 
-                                Image.network(snapshot.data.docs[index]["replyMsg"], width: 30, height: 30,))])
-
-                                : Column(children: [  
-                                Container(width: 150,alignment: Alignment.center,
-                                color: Colors.blue[100],
-                                child:                               
-                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonBI'),)),
-                                Container(width: 150,alignment: Alignment.center,
-                                color: Colors.blue[50],
-                                child: 
-                                Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonLI'),))])
-
-                                : Column(children: [  
-                                Container(width: 150,alignment: Alignment.center,
-                                color: Colors.blue[100],
-                                child:                               
-                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonBI'),)),
-                                Container(width: 150,alignment: Alignment.center,
-                                color: Colors.blue[50],
-                                child: 
-                                Text(snapshot.data.docs[index]["replyMsg"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonLI'),)),
-                              ],)
-                            ),)
-                          ]else...[
-                            Text("")
-                          ],
-
-                        snapshot.data.docs[index]["cat"] == 1 ? 
-                        InkWell(
-                        onTap: () => _sticker(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["sticker"]),
-                        child:                         
-                        Image.asset("assets/sticker/" + snapshot.data.docs[index]["sticker"] + ".gif", width: 80, height: 80,))
-
-                        : snapshot.data.docs[index]["cat"] == 2 ?
-                        InkWell(
-                        onTap: () => Navigator.push(context, MaterialPageRoute(
-                        builder: (context)=> PhotoView2(url: snapshot.data.docs[index]["photo"], date: snapshot.data.docs[index]["date"],
-                        name: snapshot.data.docs[index]["photoname"], isImage: snapshot.data.docs[index]["isImage"],))),
-                        child: snapshot.data.docs[index]["isImage"] == true ?
-                        Image.network(snapshot.data.docs[index]["photo"], width: 150, height: 150,)
-                        :  SizedBox(width: 200,
-                        child:
-                        Row(
-                        children: [
-                        Icon(Icons.file_download, color: Theme.of(context).hintColor, size: 30,),
-                        SizedBox(width: 10),
-                        Expanded(child:
-                        Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 10,fontFamily: 'BrandonLI'),))]))
-                        )
-                        
-                        : InkWell(
-                        onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["msg"]),
-                        child:                          
-                        Text(snapshot.data.docs[index]["msg"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 15,fontFamily: 'BrandonBI'),)),
-                        
-                        SizedBox(width: 80, child:
-                        Row(mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                        Text(snapshot.data.docs[index]["time"], style: TextStyle(color: Theme.of(context).hintColor, fontSize: 10,fontFamily: 'BrandonLI'),)],),),
-
-                        ],)
-                      ),
-                    ),
-                  )),
-                  // CircleAvatar(
-                  //   child:
-                  SizedBox(width: 10,),  
-
-                  ValueListenableBuilder(
-                  valueListenable: reply,
-                  builder: (context, value, widget) { 
-                  return Align(alignment: Alignment.centerLeft,
-                  child: 
-                  Container(
-                  padding: EdgeInsets.only(left: 10),
-                  width: 40, height: 40,
-                  child: FloatingActionButton(
-                  backgroundColor: Color.fromARGB(200, 255, 255, 255),
-                  onPressed: (){
-                  if(snapshot.data.docs[index]["cat"] == 1){    
-                    setState(() {
-                      
-                        reply = ValueNotifier<bool>(true);
-                        replyMsg = snapshot.data.docs[index]["sticker"];
-                        replyName = snapshot.data.docs[index]["name"];   
-                        category = 1;                                       
-                    });                
-                        // Fluttertoast.showToast(  
-                        //             msg:"Replying to sticker \n double tap on message to view.!",  
-                        //             toastLength: Toast.LENGTH_LONG,  
-                        //             gravity: ToastGravity.BOTTOM,  
-                        //             backgroundColor: Colors.blueGrey,  
-                        //             textColor: Colors.white); 
-
-                  } else if(snapshot.data.docs[index]["cat"] == 2){
-                    if(snapshot.data.docs[index]["isImage"] == true){
-
-                    setState(() {                     
-                        reply = ValueNotifier<bool>(true);
-                        isImage  = snapshot.data.docs[index]["isImage"];
-                        replyMsg = snapshot.data.docs[index]["photo"];
-                        replyName = snapshot.data.docs[index]["name"];  
-                        category = 2;                                        
- 
-                    });
-                    //     Fluttertoast.showToast(  
-                    //                 msg:"Replying to photo \n double tap on message to view.!",  
-                    //                 toastLength: Toast.LENGTH_LONG,  
-                    //                 gravity: ToastGravity.BOTTOM,  
-                    //                 backgroundColor: Colors.blueGrey,  
-                    //                 textColor: Colors.white);  
-                     } else{
-                    setState(() {                     
-                        reply = ValueNotifier<bool>(true);
-                        photoname = snapshot.data.docs[index]["photoname"];
-                        isImage  = snapshot.data.docs[index]["isImage"];
-                        replyMsg = snapshot.data.docs[index]["photo"];
-                        replyName = snapshot.data.docs[index]["name"];  
-                        category = 2;                                        
- 
-                    });
-                        // Fluttertoast.showToast(  
-                        //             msg:"Replying to doc \n double tap on message to view.!",  
-                        //             toastLength: Toast.LENGTH_LONG,  
-                        //             gravity: ToastGravity.BOTTOM,  
-                        //             backgroundColor: Colors.blueGrey,  
-                        //             textColor: Colors.white);                        
-                    }                   
-                  } else {
-                    setState(() {                      
-                        reply = ValueNotifier<bool>(true);
-                        replyMsg = snapshot.data.docs[index]["msg"];
-                        replyName = snapshot.data.docs[index]["name"];   
-                        category = 3;   
-                    });
-                        // Fluttertoast.showToast(  
-                        //             msg:"Replying to " + replyMsg.toString() + "\n double tap on message to view.!",  
-                        //             toastLength: Toast.LENGTH_LONG,  
-                        //             gravity: ToastGravity.BOTTOM,  
-                        //             backgroundColor: Colors.blueGrey,  
-                        //             textColor: Colors.white);                     
-                  }
-                  }, 
-                  child: Icon(Icons.reply,color: Colors.blueGrey,))),
-                  );
-                  })
-                  ]);
-              },),
-
-              //SizedBox(height: 50,)
-              
-              ]);
-    
-      }})
+                  chat1()
                   ),
 
                   // Sticker
@@ -1131,7 +739,7 @@ ClearMessage() async{
                 ),
                 textCapitalization: TextCapitalization.words,
                 decoration:  InputDecoration(
-                  hintText: cat == 1? 'Type down your message' : 'Tap here cancel media select',
+                  hintText: cat == 1? 'Type down your message' : 'Tap here choose send message',
                   border: UnderlineInputBorder(),
                 ),
               ),
@@ -1494,22 +1102,30 @@ String replyName = "";
 String replyMsg = "";
 int category = 0;
 bool isImage = true; 
+ValueNotifier<bool> reply = ValueNotifier(false);
 ScrollController scrollController = ScrollController();
 String photoname = "";
-final growableList = <String>[];
 
 
 //CHAT1.........................................................................................................
-// class chat1 extends StatefulWidget {
-//   chat1({Key? key}) : super(key: key);
+class chat1 extends StatefulWidget {
+  chat1({Key? key}) : super(key: key);
 
-//   @override
-//   _chat1State createState() => _chat1State();
-// }
+  @override
+  _chat1State createState() => _chat1State();
+}
+
+  final growableList = <String>[];
+
+class _chat1State extends State<chat1> {
+  TextEditingController messageController =  TextEditingController();
+  final collectionReference = FirebaseFirestore.instance;
 
 
-//class _chat1State extends State<chat1> {
-
+  bool isSelect = false;
+  late String image;
+  bool? value = false;
+  User? user = FirebaseAuth.instance.currentUser;
 
 
 // void initState(){
@@ -1519,16 +1135,401 @@ final growableList = <String>[];
 //   });
 // }
 
-  // @override
-  // Widget build(BuildContext context) {
+  @override
+  Widget build(BuildContext context) {
 
+//stickerview......................................................................................................
+   _sticker(String date, String name)  async{ 
+     await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          title: Center(child: 
+          Image.asset("assets/sticker/" + name + ".gif", width: 130, height: 130,)
+          ),
+          content: Text(date, textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 15, color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),
+          actions: <Widget>[
+          Center(child:
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Theme.of(context).scaffoldBackgroundColor
+             ),               
+            child:  Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
+            onPressed: () {  
+              Navigator.of(context).pop();  
+            },  
+          )),  
+          ],
+        ));
+  } 
+//stickerview......................................................................................................
+   _messageView(String date, String msg)  async{ 
+     await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          title:  Text(msg, textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonBI', fontSize: 25, color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),
+          content:  Text(date, textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI', fontSize: 15, color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),          
+          actions: <Widget>[
+          Center(child:
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Theme.of(context).scaffoldBackgroundColor
+             ),               
+            child:  Text('Close',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
+            onPressed: () {  
+              Navigator.of(context).pop();  
+            },  
+          )),  
+          ],
+        ));
+  } 
 
+//....................................................................................................................
+    return StreamBuilder(
+      stream: FirebaseFirestore.instance.collection(Globalid).orderBy("sortTime").snapshots(),
+      builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+         if (!snapshot.hasData) {   
+        return  Center(child: 
+        Column(mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+          const Text("Noting is here!", style: TextStyle(color: Colors.grey, fontSize: 20, fontFamily: 'BrandonLI') )
+          ],));
+        }
 
+      else{
+        return ListView(
+        controller: scrollController,
+        reverse: true,
+        children: [
+        ListView.builder(
+                  physics: const ScrollPhysics(),
+                  padding: const EdgeInsets.all(5),
+                  scrollDirection: Axis.vertical,
+                  shrinkWrap: true,
+                  itemCount: snapshot.data.docs.length,        
+                  itemBuilder: (BuildContext context, int index) {
 
+                  return 
+                Stack(
+                  children: [
+                                 
+                  //GestureDetector(
+                
+                // onHorizontalDragEnd: (DragEndDetails details) async{
+                //   if (details.primaryVelocity! > 0) {
 
-//   }
+                //   if(snapshot.data.docs[index]["cat"] == 1){    
+                //     setState(() {
+                      
+                //         reply = ValueNotifier<bool>(true);
+                //         replyMsg = snapshot.data.docs[index]["sticker"];
+                //         replyName = snapshot.data.docs[index]["name"];   
+                //         category = 1;                                       
+                //     });                
+                //         Fluttertoast.showToast(  
+                //                     msg:"Replying to sticker \n double tap on message to view.!",  
+                //                     toastLength: Toast.LENGTH_LONG,  
+                //                     gravity: ToastGravity.BOTTOM,  
+                //                     backgroundColor: Colors.blueGrey,  
+                //                     textColor: Colors.white); 
+
+                //   } else if(snapshot.data.docs[index]["cat"] == 2){
+                //     setState(() {
+                      
+                //          reply = ValueNotifier<bool>(true);
+                //         replyMsg = snapshot.data.docs[index]["photo"];
+                //         replyName = snapshot.data.docs[index]["name"];  
+                //         category = 2;                                        
+ 
+                //     });
+                //         Fluttertoast.showToast(  
+                //                     msg:"Replying to photo \n double tap on message to view.!",  
+                //                     toastLength: Toast.LENGTH_LONG,  
+                //                     gravity: ToastGravity.BOTTOM,  
+                //                     backgroundColor: Colors.blueGrey,  
+                //                     textColor: Colors.white);                     
+                //   } else {
+                //     setState(() {
+                      
+                //         reply = ValueNotifier<bool>(true);
+                //         replyMsg = snapshot.data.docs[index]["msg"];
+                //         replyName = snapshot.data.docs[index]["name"];   
+                //         category = 3;   
+                //     });
+                //         Fluttertoast.showToast(  
+                //                     msg:"Replying to " + replyMsg.toString() + "\n double tap on message to view.!",  
+                //                     toastLength: Toast.LENGTH_LONG,  
+                //                     gravity: ToastGravity.BOTTOM,  
+                //                     backgroundColor: Colors.blueGrey,  
+                //                     textColor: Colors.white);                     
+                //   }                 
+                //   }
+                // if (details.primaryVelocity! < 0) {
+
+                //     setState(() {
+                //         reply = ValueNotifier<bool>(false);
+                //         replyMsg = "";
+                //         replyName = "";     
+                //     });
+                //   }
+                  
+                //   },
+                  
+                //  child: 
+                 InkWell(
+                  onLongPress: () async {
+                  if (snapshot.data.docs[index]["id"] == user!.email!){
+                    if(snapshot.data.docs[index]["isSelected"] == true){
+                     
+                     for (var i = 0 ; i <= growableList.length - 1 ; i++){
+                     await FirebaseFirestore.instance.collection(Globalid).doc(growableList[i]).update({
+                        'isSelected': false                
+                      });  
+                     }
+                     setState(() {                    
+                     growableList.clear();
+                       
+                     });
+
+                    }  
+                  }                 
+                  },                    
+                  onDoubleTap: () async{ 
+                  if (snapshot.data.docs[index]["id"] == user!.email!){
+
+                    if(snapshot.data.docs[index]["isSelected"] == true){
+
+                     await FirebaseFirestore.instance.collection(Globalid).doc(snapshot.data.docs[index].id).update({
+                        'isSelected': false                
+                      });  
+
+                     setState(() {                    
+                     growableList.remove(snapshot.data.docs[index].id);
+                       
+                     });
+
+                    } else {
+
+                     await FirebaseFirestore.instance.collection(Globalid).doc(snapshot.data.docs[index].id).update({
+                        'isSelected': true                
+                      });  
+
+                    setState(() {
+                      growableList.add(snapshot.data.docs[index].id);
+                    });                   
+                    
+                    }
+                    }
+                  },
+
+                  child: 
+                  Container(
+                    color: snapshot.data.docs[index]["isSelected"] == true ?
+                   Color.fromARGB(200, 96, 125, 139) : Theme.of(context).scaffoldBackgroundColor ,
+                    padding: EdgeInsets.only(left: 14,right: 14,top: 10,bottom: 10),
+                    child: Align(
+                      alignment: (snapshot.data.docs[index]["id"] != user!.email! ? Alignment.topLeft : Alignment.topRight),
+                      child: 
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(20),
+                          color: (snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).cardColor : Colors.blue[200]),
+                        ),
+                        padding: EdgeInsets.all(16),
+                        child: Column(children: [                       
+
+                          if(snapshot.data.docs[index]["reply"] == true)...[
+                            SizedBox(
+                            width: 150,                            
+                            child: Container(
+                            margin: const EdgeInsets.all(5.0),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.blue, width: 2)
+                            ),    
+                              child: 
+                               snapshot.data.docs[index]["cat1"] == 1 ?  
+                               Column(children: [
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[100],
+                                child: 
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey, fontSize: 10,fontFamily: 'BrandonBI'),)),
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[50],
+                                child: 
+                                Image.asset("assets/sticker/" + snapshot.data.docs[index]["replyMsg"] + ".gif", width: 30, height: 30,))])
+
+                                : snapshot.data.docs[index]["cat1"] == 2 ?
+                                snapshot.data.docs[index]["isImage"] == true ?
+                                Column(children: [
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[100],
+                                child: 
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey, fontSize: 15,fontFamily: 'BrandonBI'),)),
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[50],
+                                child: 
+                                Image.network(snapshot.data.docs[index]["replyMsg"], width: 30, height: 30,))])
+
+                                : Column(children: [  
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[100],
+                                child:                               
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonBI'),)),
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[50],
+                                child: 
+                                Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonLI'),))])
+
+                                : Column(children: [  
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[100],
+                                child:                               
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonBI'),)),
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[50],
+                                child: 
+                                Text(snapshot.data.docs[index]["replyMsg"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonLI'),)),
+                              ],)
+                            ),)
+                          ]else...[
+                            Text("")
+                          ],
+
+                        snapshot.data.docs[index]["cat"] == 1 ? 
+                        InkWell(
+                        onTap: () => _sticker(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["sticker"]),
+                        child:                         
+                        Image.asset("assets/sticker/" + snapshot.data.docs[index]["sticker"] + ".gif", width: 80, height: 80,))
+
+                        : snapshot.data.docs[index]["cat"] == 2 ?
+                        InkWell(
+                        onTap: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (context)=> PhotoView2(url: snapshot.data.docs[index]["photo"], date: snapshot.data.docs[index]["date"],
+                        name: snapshot.data.docs[index]["photoname"], isImage: snapshot.data.docs[index]["isImage"],))),
+                        child: snapshot.data.docs[index]["isImage"] == true ?
+                        Image.network(snapshot.data.docs[index]["photo"], width: 150, height: 150,)
+                        :  SizedBox(width: 200,
+                        child:
+                        Row(
+                        children: [
+                        Icon(Icons.file_download, color: Theme.of(context).hintColor, size: 30,),
+                        SizedBox(width: 10),
+                        Expanded(child:
+                        Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 10,fontFamily: 'BrandonLI'),))]))
+                        )
+                        
+                        : InkWell(
+                        onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["msg"]),
+                        child:                          
+                        Text(snapshot.data.docs[index]["msg"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 15,fontFamily: 'BrandonBI'),)),
+                        
+                        SizedBox(width: 80, child:
+                        Row(mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                        Text(snapshot.data.docs[index]["time"], style: TextStyle(color: Theme.of(context).hintColor, fontSize: 10,fontFamily: 'BrandonLI'),)],),),
+
+                        ],)
+                      ),
+                    ),
+                  )),
+                  // CircleAvatar(
+                  //   child:
+                  SizedBox(width: 10,),  
+
+                  ValueListenableBuilder(
+                  valueListenable: reply,
+                  builder: (context, value, widget) { 
+                  return Align(alignment: Alignment.centerLeft,
+                  child: 
+                  Container(
+                  padding: EdgeInsets.only(left: 10),
+                  width: 40, height: 40,
+                  child: FloatingActionButton(
+                  backgroundColor: Color.fromARGB(200, 255, 255, 255),
+                  onPressed: (){
+                  if(snapshot.data.docs[index]["cat"] == 1){    
+                    setState(() {
+                      
+                        reply = ValueNotifier<bool>(true);
+                        replyMsg = snapshot.data.docs[index]["sticker"];
+                        replyName = snapshot.data.docs[index]["name"];   
+                        category = 1;                                       
+                    });                
+                        Fluttertoast.showToast(  
+                                    msg:"Replying to sticker \n double tap on message to view.!",  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white); 
+
+                  } else if(snapshot.data.docs[index]["cat"] == 2){
+                    if(snapshot.data.docs[index]["isImage"] == true){
+
+                    setState(() {                     
+                        reply = ValueNotifier<bool>(true);
+                        isImage  = snapshot.data.docs[index]["isImage"];
+                        replyMsg = snapshot.data.docs[index]["photo"];
+                        replyName = snapshot.data.docs[index]["name"];  
+                        category = 2;                                        
+ 
+                    });
+                        Fluttertoast.showToast(  
+                                    msg:"Replying to photo \n double tap on message to view.!",  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white);  
+                    } else{
+                    setState(() {                     
+                        reply = ValueNotifier<bool>(true);
+                        photoname = snapshot.data.docs[index]["photoname"];
+                        isImage  = snapshot.data.docs[index]["isImage"];
+                        replyMsg = snapshot.data.docs[index]["photo"];
+                        replyName = snapshot.data.docs[index]["name"];  
+                        category = 2;                                        
+ 
+                    });
+                        Fluttertoast.showToast(  
+                                    msg:"Replying to doc \n double tap on message to view.!",  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white);                        
+                    }                   
+                  } else {
+                    setState(() {                      
+                        reply = ValueNotifier<bool>(true);
+                        replyMsg = snapshot.data.docs[index]["msg"];
+                        replyName = snapshot.data.docs[index]["name"];   
+                        category = 3;   
+                    });
+                        Fluttertoast.showToast(  
+                                    msg:"Replying to " + replyMsg.toString() + "\n double tap on message to view.!",  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white);                     
+                  }
+                  }, 
+                  child: Icon(Icons.reply,color: Colors.blueGrey,))),
+                  );
+                  })
+                  ]);
+              },),
+
+              //SizedBox(height: 50,)
+              
+              ]);
+    
+      }});
+
+  }
   
-// }
+}
 
 
 //PhotoView for profile............................................................................................
