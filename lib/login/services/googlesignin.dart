@@ -155,8 +155,8 @@ Future<String> uploadFile(_image) async {
   Widget build(BuildContext context) {
   return Validation == true ? homeScreen()
    : Scaffold(
-      backgroundColor: Colors.white,
-      body: isloading == true ? Center(child: CircularProgressIndicator(color: Colors.blueGrey,))
+      backgroundColor: isloading == true ? Colors.black : Colors.white,
+      body: isloading == true ? Center(child: Image.asset("assets/loading/loading2.gif"))
       : Column(mainAxisAlignment: MainAxisAlignment.center,
       children: [
 

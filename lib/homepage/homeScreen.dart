@@ -58,7 +58,7 @@ class homeScreenState extends State<homeScreen> with WidgetsBindingObserver {
     firebaseMessaging.requestPermission();
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('onMessage: $message');
+      debugPrint('onMessage: $message');
       if (message.notification != null) {
         showNotification(message.notification!);
       }
@@ -68,7 +68,7 @@ class homeScreenState extends State<homeScreen> with WidgetsBindingObserver {
 
     
     firebaseMessaging.getToken().then((token) {
-      print('push token: $token');
+      debugPrint('push token: $token');
       if (token != null) {
         FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({     
         'pushToken': token
@@ -101,7 +101,7 @@ class homeScreenState extends State<homeScreen> with WidgetsBindingObserver {
     NotificationDetails platformChannelSpecifics =
         NotificationDetails(android: androidPlatformChannelSpecifics);
 
-    print(remoteNotification);
+    debugPrint(remoteNotification.toString());
 
     await flutterLocalNotificationsPlugin.show(
       0,
@@ -280,8 +280,8 @@ if (isOnline == true){
 
                         Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => 
                         chat(id: snapshot.data.docs[index]['id'], online: isOnline,)));
-                        print("###################################################");
-                        print(isOnline);
+                       // print("###################################################");
+                       // print(isOnline);
                       },                       
                     child: StreamBuilder(
                     stream: FirebaseFirestore.instance.collection("Users").doc(snapshot.data.docs[index]['email'])
@@ -566,7 +566,7 @@ launchURL() async{
             } catch(e){
               debugPrint(e.toString());
             }   
-                      
+
             RestartWidget.restartApp(context);
 
             Navigator.of(context).pop();  

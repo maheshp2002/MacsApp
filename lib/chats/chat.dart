@@ -341,28 +341,28 @@ ClearMessage() async{
      await showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          backgroundColor: const Color.fromARGB(223, 255, 254, 254),
-          title: const Text("Do you want to delete all your messages?", textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonBI', color: Colors.blueGrey,fontWeight: FontWeight.bold)),
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          title: Text("Do you want to delete all your messages?", textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),
           
-          content: const Text("This will delete all the messages you sent permenantly for both users.", textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey,fontWeight: FontWeight.bold)),                    
+          content: Text("This will delete all the messages you sent permenantly for both users.", textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),                    
           
           actions: <Widget>[
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Color.fromARGB(223, 255, 254, 254)
+              primary: Theme.of(context).scaffoldBackgroundColor
              ),               
-            child: const Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            child: Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
             onPressed: () {  
               Navigator.of(context).pop();  
             },  
           ),  
           ElevatedButton(  
             style: ElevatedButton.styleFrom(
-              primary: Color.fromARGB(223, 255, 254, 254)
+              primary: Theme.of(context).scaffoldBackgroundColor
              ),               
-            child: const Text('Delete',style: TextStyle(fontFamily: 'BrandonLI', color: Colors.blueGrey)),  
+            child: Text('Delete',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
             onPressed: () async { 
               String imgUrl = "";
                         try{
@@ -572,12 +572,12 @@ ClearMessage() async{
 
         Column(children: [
         
-        SizedBox(height: 10,),
+        snapshot.data['showOnline'] == true ? SizedBox(height: 10,) : SizedBox(height: 30,),
 
         Text(snapshot.data['name'], textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70,fontWeight: FontWeight.bold)),
         
-        snapshot.data['isOnline'] == true ? 
+        snapshot.data['showOnline'] == true ? 
         Text(snapshot.data['isOnline'] == true ? "online" : "offline", 
           style:  TextStyle(fontFamily: 'BrandonLI', color: snapshot.data['isOnline'] == true ? Color.fromARGB(255, 4, 255, 12) : Colors.white70, fontSize: 13))
 
@@ -979,7 +979,9 @@ ClearMessage() async{
 
           SizedBox(width: 5,),
 
-             Expanded(child: 
+            Expanded(child: Container(
+            constraints: BoxConstraints(maxHeight: 200),
+             child:
                TextFormField(
                 controller: messageController,
                 keyboardType: TextInputType.multiline,
@@ -995,7 +997,7 @@ ClearMessage() async{
                   border: UnderlineInputBorder(),
                 ),
               ),
-              ),
+              )),
 
           SizedBox(width: 10,),
 
@@ -1008,7 +1010,12 @@ ClearMessage() async{
         }
 
       else{
-        return 
+        return Container(
+        decoration: BoxDecoration(
+          border: Border(
+            top: BorderSide(width: 1.0, color: Theme.of(context).hintColor),
+          )),
+        child:
         Column( mainAxisSize: MainAxisSize.min,
         children: [ 
         ValueListenableBuilder(
@@ -1222,8 +1229,10 @@ ClearMessage() async{
 //.........................................................................................................
           SizedBox(width: 5,),
 
-               Expanded(child: 
-               InkWell(child: 
+              Expanded(child: 
+              InkWell(child: Container(
+              constraints: BoxConstraints(maxHeight: 50),
+              child:
                TextFormField(
                 enabled: cat == 1? true : false,
                 controller: messageController,
@@ -1238,7 +1247,7 @@ ClearMessage() async{
                   hintText: cat == 1? 'Type down your message' : 'Tap here cancel media select',
                   border: UnderlineInputBorder(),
                 ),
-              ),
+              )),
               onTap: () {
                 setState(() {
                   cat = 1;
@@ -1322,8 +1331,9 @@ ClearMessage() async{
           },
           icon: Icon(Icons.send, color: Theme.of(context).hintColor,)),            
 
-        ])
-         ]);
+        ]),
+        SizedBox(height: 10,)
+         ]));
     
       }}))
                 ],
@@ -1347,13 +1357,16 @@ Showbottomsheet (context){
               //barrierColor : Theme.of(context).scaffoldBackgroundColor,
               context: context,
               builder: (context) => Padding(padding: EdgeInsets.only(bottom: 70, left: 20, right: 20),
-              child: Card(elevation: 20,
+              child: Material(elevation: 20,
               shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15.0),
+              borderRadius: BorderRadius.circular(30.0),
                 ),
-              color: Theme.of(context).scaffoldBackgroundColor,
+              color: Colors.black,
               child: Container(
-              color: Theme.of(context).scaffoldBackgroundColor,
+                decoration: BoxDecoration(              
+                borderRadius: BorderRadius.circular(30.0),               
+                color: Theme.of(context).scaffoldBackgroundColor,
+                ),
                 height: 150,
                 width: double.infinity,
                 child: Column(
@@ -1824,14 +1837,14 @@ class PhotoView2State extends State<PhotoView2>{
       await Dio().download(url, path,
       onReceiveProgress: (received, total){
         double progress1 = received/ total;
-        print(path);
-        print(url);
+        //print(path);
+        //print(url);
         setState(() {
           //progress = progress1;
         });
       });
 
-    print(path);
+   // print(path);
     OpenFile.open(path, type: "*/*");
     // } catch(e) {
     //   try{
