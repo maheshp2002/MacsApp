@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:macsapp/homepage/homeScreen.dart';
@@ -253,6 +254,26 @@ SizedBox(height: 10,),
               onPressed: () async{
               String imgUrl = "";
 
+              if (unameController.text.trim().isEmpty)
+              { 
+                Fluttertoast.showToast(  
+                msg: 'Please enter a name..!',  
+                toastLength: Toast.LENGTH_LONG,  
+                gravity: ToastGravity.BOTTOM,  
+                backgroundColor: Colors.red,  
+                textColor: Colors.white); 
+              } 
+              
+              else if (aboutController.text.trim().isEmpty)
+              { 
+                Fluttertoast.showToast(  
+                msg: 'Please enter about..!',  
+                toastLength: Toast.LENGTH_LONG,  
+                gravity: ToastGravity.BOTTOM,  
+                backgroundColor: Colors.red,  
+                textColor: Colors.white); 
+
+              } else{
               setState(() {
               isloading = true;
               });
@@ -284,6 +305,7 @@ SizedBox(height: 10,),
               Navigator.push(context, 
               MaterialPageRoute(builder: (BuildContext context) => homeScreen(),));               
 
+              }
               },
               child: Text("Enter", style: TextStyle(fontFamily: 'BrandonLI', color: Colors.white),)
               )

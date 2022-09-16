@@ -95,7 +95,7 @@ Future<String> uploadFile(_image) async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: isLoading == true ? Colors.black : Colors.blueGrey,
+        backgroundColor: isLoading == true ? Color(0xFF1f212d) : Colors.blueGrey,
         centerTitle: true,
         title: Text("Profile", textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70)),
@@ -103,8 +103,8 @@ Future<String> uploadFile(_image) async {
         onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      backgroundColor: isLoading == true ? Colors.black : Theme.of(context).scaffoldBackgroundColor,
-      body: isLoading == true ? Center(child: Image.asset("assets/loading/loading1.gif",height: 300, width: 300,))
+      backgroundColor: isLoading == true ? Color(0xFF1f212d) : Theme.of(context).scaffoldBackgroundColor,
+      body: isLoading == true ? Center(child: Image.asset("assets/loading/loading1.gif"))
       : StreamBuilder(
       stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!).snapshots(),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
