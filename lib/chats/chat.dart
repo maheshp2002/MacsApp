@@ -982,7 +982,8 @@ ClearMessage() async{
              Expanded(child: 
                TextFormField(
                 controller: messageController,
-                keyboardType: TextInputType.text,
+                keyboardType: TextInputType.multiline,
+                maxLines: null,
                 style: const TextStyle(
                   fontSize: 16,
                   fontFamily: 'BrandonLI'
@@ -1226,7 +1227,8 @@ ClearMessage() async{
                TextFormField(
                 enabled: cat == 1? true : false,
                 controller: messageController,
-                keyboardType: TextInputType.text,
+                keyboardType: TextInputType.multiline,
+                maxLines: null,
                 style: const TextStyle(
                   fontSize: 16,
                   fontFamily: 'BrandonLI'
