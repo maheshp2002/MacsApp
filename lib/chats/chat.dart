@@ -17,19 +17,21 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class chat extends StatefulWidget {
 
   final id; 
-  chat({Key? key,this.id}) : super(key: key);
+  final online;
+  chat({Key? key,this.id,this.online}) : super(key: key);
   @override
   chatState createState() => chatState();
 }
 
 //popUp...........................................................................................
 
-enum Menu { itemDelete, itemClearMsg, itemClose}
+enum Menu { itemDelete, itemClearMsg, itemClose, itemHideOnline}
 
 //.................................................................................................
 
@@ -441,9 +443,9 @@ ClearMessage() async{
           // This button presents popup menu items.
           PopupMenuButton<Menu>(
               // Callback that sets the selected popup menu item.
-              onSelected: (Menu item) {   
+              onSelected: (Menu item) async{   
 
-              if (item.name == "itemClearMsg"){
+              if (item.name == "itemClearMsg") {
               Fluttertoast.showToast(  
               msg: 'This will delete all the message you sent for both users...!',  
               toastLength: Toast.LENGTH_LONG,  
@@ -453,7 +455,34 @@ ClearMessage() async{
 
               ClearMessage();
 
-              }else {      
+              } else if (item.name == "itemHideOnline") {
+              
+              if (showOnline == true) {
+                
+                FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
+                  'showOnline': false
+                });
+
+
+              setState(() {
+              showOnline =  false; 
+              });
+
+              } else {
+
+                FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
+                  'showOnline': true
+                });
+
+
+              setState(() {
+              showOnline =  true; 
+              });
+
+              }
+
+              }
+              else {      
 
                 selectedItem(item.name);
               }
@@ -475,7 +504,16 @@ ClearMessage() async{
                         Text("Clear all message",
                         style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold))
                       ]),
-                    ),                    
+                    ),      
+                     PopupMenuItem<Menu>(
+                      value: Menu.itemHideOnline,
+                      child: Row(children: [
+                        showOnline == true ? Icon(Icons.visibility, color: Theme.of(context).hintColor,) 
+                        : Icon(Icons.visibility_off, color: Theme.of(context).hintColor,),
+                        Text(showOnline == true ? " Hide online" : " Show online",
+                        style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold))
+                      ]),
+                    ),                                    
                     PopupMenuItem<Menu>(
                       value: Menu.itemClose,
                       child: Row(children: [
@@ -504,8 +542,21 @@ ClearMessage() async{
 
         SizedBox(width: 10,),
 
+        Column(children: [
+          
+        SizedBox(height: 10,),
+
         Text('name', textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70,fontWeight: FontWeight.bold))]);        
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70,fontWeight: FontWeight.bold)),     
+        
+
+        Text("offline",
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70, fontSize: 13)), 
+
+         SizedBox(height: 10,),    
+
+        ]),
+        ]);  
         } else {
         return
         Row(children: [
@@ -519,8 +570,23 @@ ClearMessage() async{
         
         SizedBox(width: 10,),
 
+        Column(children: [
+        
+        SizedBox(height: 10,),
+
         Text(snapshot.data['name'], textAlign: TextAlign.center,
-          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70,fontWeight: FontWeight.bold))],);
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70,fontWeight: FontWeight.bold)),
+        
+        snapshot.data['isOnline'] == true ? 
+        Text(snapshot.data['isOnline'] == true ? "online" : "offline", 
+          style:  TextStyle(fontFamily: 'BrandonLI', color: snapshot.data['isOnline'] == true ? Color.fromARGB(255, 4, 255, 12) : Colors.white70, fontSize: 13))
+
+        : Text(""), 
+
+         SizedBox(height: 10,),    
+                   
+        ]),
+          ],);
           }}),          
       ),
 

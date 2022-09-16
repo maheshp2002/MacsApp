@@ -42,7 +42,8 @@ dependencies:
   #notification
   firebase_messaging: ^13.0.2
   cloud_functions: ^3.3.7
-
+  flutter_local_notifications: ^9.9.1
+  
   #login
   image_picker: ^0.8.5+3
   font_awesome_flutter: ^10.2.1

@@ -83,8 +83,15 @@ Future<String> uploadFile(_image) async {
                 'name': unameController.text.trim(),
                 'about': aboutController.text.trim(),
                 'img': imageURL,
-                'email': user!.email!
-              });                        
+                'email': user!.email!,
+                'pushToken': "",
+                'showOnline': true,
+                'isOnline': true,
+              });   
+              
+              setState(() {
+                showOnline = true;
+              });
 }
 //..........................................................................................
 

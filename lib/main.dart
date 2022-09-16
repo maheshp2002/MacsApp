@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:macsapp/homepage/homeScreen.dart';
 import 'package:macsapp/login/login.dart';
 import 'package:macsapp/splash/splash.dart';
@@ -51,6 +53,25 @@ class MyAppState extends State<MyApp> {
     // print(user);
     // print("#######################################");
     return user;}
+
+HideOnline () async{
+                          try{
+                            await FirebaseFirestore.instance.collection("Users").doc(user!.email!).get()
+                            .then((snapshot) {
+                                      showOnline = snapshot.get('showOnline');
+                                    });
+                        }catch(e){
+                          Fluttertoast.showToast(  
+                          msg: 'error occured..!',  
+                          toastLength: Toast.LENGTH_LONG,  
+                          gravity: ToastGravity.BOTTOM,  
+                          backgroundColor: Colors.blueGrey,  
+                          textColor: Colors.white  
+                          );                            
+                        }   
+
+}
+   
     
   @override
   Widget build(BuildContext context) {

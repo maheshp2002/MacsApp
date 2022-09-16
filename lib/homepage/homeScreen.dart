@@ -11,6 +11,8 @@ import 'package:macsapp/profile.dart';
 import 'package:macsapp/request/request.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class homeScreen extends StatefulWidget {
 
@@ -19,21 +21,136 @@ class homeScreen extends StatefulWidget {
 }
 
 late bool? isDark;
+bool? showOnline;
 
-class homeScreenState extends State<homeScreen>{
+class homeScreenState extends State<homeScreen> with WidgetsBindingObserver {
   User? user = FirebaseAuth.instance.currentUser;
   final collectionReference = FirebaseFirestore.instance;
+  final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     super.initState();
+
    Future.delayed(const Duration(milliseconds: 10), () async{
+
    SharedPreferences prefs = await SharedPreferences.getInstance(); 
+
    setState(() {
    isDark = prefs.getBool('isDark');
    });
+
+  await FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
+       'isOnline': true,
+       });
+
    });
+  WidgetsBinding.instance!.addObserver(this);
+  registerNotification();
+  configLocalNotification();
+
   }  
+
+//Notification...............................................................................................................
+
+ void registerNotification() {
+    firebaseMessaging.requestPermission();
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('onMessage: $message');
+      if (message.notification != null) {
+        showNotification(message.notification!);
+      }
+
+      return;
+    });
+
+    
+    firebaseMessaging.getToken().then((token) {
+      print('push token: $token');
+      if (token != null) {
+        FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({     
+        'pushToken': token
+        }); 
+      }
+    }).catchError((err) {
+      Fluttertoast.showToast(msg: err.message.toString());
+    });
+  }
+
+  void configLocalNotification() {
+    AndroidInitializationSettings initializationSettingsAndroid = AndroidInitializationSettings('@mipmap/ic_launcher');
+    InitializationSettings initializationSettings =
+        InitializationSettings(android: initializationSettingsAndroid);
+    flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+  }
+
+//Notification...............................................................................................................
+
+  void showNotification(RemoteNotification remoteNotification) async {
+    AndroidNotificationDetails androidPlatformChannelSpecifics = AndroidNotificationDetails(
+      'com.macsapp.macsapp',
+      'Flutter chat demo',
+      playSound: true,
+      enableVibration: true,
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    NotificationDetails platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+
+    print(remoteNotification);
+
+    await flutterLocalNotificationsPlugin.show(
+      0,
+      remoteNotification.title,
+      remoteNotification.body,
+      platformChannelSpecifics,
+      payload: null,
+    );
+  }
+//.....................................................................................................................
+
+@override
+void didChangeAppLifecycleState(AppLifecycleState state) {
+super.didChangeAppLifecycleState(state);
+
+final isBg = state == AppLifecycleState.paused;
+final isClosed = state == AppLifecycleState.detached;
+final isScreen = state == AppLifecycleState.resumed;
+
+isBg || isScreen == false || isClosed == true
+    ?  CheckOnline(false)
+
+    :  CheckOnline(true);
+     // print("################################################");
+}
+
+
+CheckOnline(bool? isOnline) async{
+if (isOnline == true){
+  try{
+    FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
+          'isOnline': true,
+          });
+  } catch(e){
+    debugPrint(e.toString());
+  }
+} else {
+  try{
+    FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
+          'isOnline': false,
+          });
+  } catch(e){
+    debugPrint(e.toString());
+  }
+
+}
+// print(isOnline);
+//  print("################################################");
+}
 
   @override
   Widget build(BuildContext context) {
@@ -147,18 +264,24 @@ class homeScreenState extends State<homeScreen>{
                         _removefriend(snapshot.data.docs[index].id, snapshot.data.docs[index]['id']);
                       },
                       onTap: () async{
+                        bool isOnline = false;
                         await collectionReference.collection("Users").doc(snapshot.data.docs[index]['email']).get()
                         .then((snapshot) {
                           setState(() {
-                          Globalname = snapshot.get('name');                
+                          Globalname = snapshot.get('name');  
+                          isOnline = snapshot.get('isOnline');              
                           });
                         });
 
+                        setState(() {
                         Globalmail = snapshot.data.docs[index]['email'];
                         Globalid = snapshot.data.docs[index]['id'];
+                        });
 
                         Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => 
-                        chat(id: snapshot.data.docs[index]['id'],)));
+                        chat(id: snapshot.data.docs[index]['id'], online: isOnline,)));
+                        print("###################################################");
+                        print(isOnline);
                       },                       
                     child: StreamBuilder(
                     stream: FirebaseFirestore.instance.collection("Users").doc(snapshot.data.docs[index]['email'])
@@ -197,12 +320,13 @@ class homeScreenState extends State<homeScreen>{
                           color: Theme.of(context).hintColor,
                           fontSize: 15,
                         ),),  
-                      // trailing: IconButton(
-                      // icon: Icon(Icons.delete_sweep, color: Colors.blueGrey, size: 30,),
-                      // onPressed: () {
-                      //   // _removefriend(snapshot.data.docs[index].id);
-                      // }
-                      // ),                      
+                     trailing: snapshot.data['showOnline'] == true ?
+                     Text(snapshot.data['isOnline'] == true ? "online" : "offline", 
+                     style:  TextStyle(fontFamily: 'BrandonLI',
+                          color: snapshot.data['isOnline'] == true ? Color.fromARGB(255, 4, 255, 12) : Colors.grey,
+                          fontSize: 15,
+                        ),) : Text(""),  
+
                       leading: InkWell(
                       onTap: () => Navigator.push(context, MaterialPageRoute(
                       builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name']))),
@@ -433,7 +557,16 @@ launchURL() async{
             await service.signOutFromGoogle();
             SharedPreferences prefs = await SharedPreferences.getInstance();
             await prefs.setBool('validation', false); 
-            await  prefs.setBool('isDark', false);        
+            await  prefs.setBool('isDark', false);   
+
+            try{
+              FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
+                    'isOnline': false,
+                    });
+            } catch(e){
+              debugPrint(e.toString());
+            }   
+                      
             RestartWidget.restartApp(context);
 
             Navigator.of(context).pop();  
@@ -779,3 +912,4 @@ class _SearchFeedState extends State<SearchFeed> {
     );
   }
 }
+
