@@ -51,22 +51,54 @@ class chatState extends State<chat> {
   bool? value = false;
   User? user = FirebaseAuth.instance.currentUser;
   int cat = 1;
-  //late String image;
+  bool color = true;
   bool isShowSticker = false;
   bool _show = false;
   
   
 
  // User? user = FirebaseAuth.instance.currentUser;
-//..............................................................................................................
+//.................................................................................................................
 
   @override
   void initState() {
     super.initState();
     handleScroll();
+    chatView();
   }  
 
 
+//chat view.........................................................................................................
+    chatView() async{
+                        try{
+                        await FirebaseFirestore.instance.collection(Globalid).where('id', isNotEqualTo: user!.email!)
+                        .get().then((snapshot) {
+
+                          snapshot.docs.forEach((documentSnapshot) async {
+                            String thisDocId = documentSnapshot.id;
+
+                          try{
+                            FirebaseFirestore.instance.collection(Globalid).doc(thisDocId).update({
+                              'color': color,
+                            });
+
+                          } catch (e){
+                                debugPrint("error");
+                          } 
+
+                        });
+                        }
+                        );
+                        }catch(e){
+                          Fluttertoast.showToast(  
+                          msg: 'error occured..!',  
+                          toastLength: Toast.LENGTH_LONG,  
+                          gravity: ToastGravity.BOTTOM,  
+                          backgroundColor: Colors.blueGrey,  
+                          textColor: Colors.white  
+                          );                            
+                        }   
+  }
 //Show/hide floating button..........................................................................................
   
   void showFloationButton() {
@@ -123,6 +155,7 @@ Future<String> uploadFile(_image) async {
                   try{
                       await FirebaseFirestore.instance.collection(widget.id).add({
                         'photo': imageURL,
+                        'color': false,
                         'photoname': photoname,
                         'isImage': isImage,
                         'time': outputFormat.format(DateTime.now()),
@@ -743,7 +776,10 @@ ClearMessage() async{
                         SizedBox(width: 80, child:
                         Row(mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                        Text(snapshot.data.docs[index]["time"], style: TextStyle(color: Theme.of(context).hintColor, fontSize: 10,fontFamily: 'BrandonLI'),)],),),
+                        Text(snapshot.data.docs[index]["time"], style: TextStyle(color: Theme.of(context).hintColor, fontSize: 10,fontFamily: 'BrandonLI'),),
+                        SizedBox(width: 5,),
+                        Icon(Icons.check, color: snapshot.data.docs[index]["color"] == true ? Colors.blue: Colors.grey[500], size: 15,)
+                        ],),),
 
                         ],)
                       ),
@@ -1153,9 +1189,14 @@ ClearMessage() async{
                 if (cat == 1){
                  if (messageController.text.trim().isNotEmpty)
                  {
+
+                  String message = messageController.text.trim();
+                  messageController.clear();  
+
                  try{ 
                       await FirebaseFirestore.instance.collection(widget.id).add({
-                        'msg': messageController.text.trim(),
+                        'msg': message,
+                        'color': false,
                         'time': outputFormat.format(DateTime.now()),
                         'sortTime': DateTime.now().toString(),
                         'isImage': isImage,
@@ -1180,7 +1221,6 @@ ClearMessage() async{
                           textColor: Colors.white); 
                       }   
 
-                messageController.clear();  
 
                 setState(() {
                   cat = 1;
@@ -1236,6 +1276,7 @@ ClearMessage() async{
 Showbottomsheet (context){
         
           showCupertinoModalPopup<void>(
+              //barrierColor : Theme.of(context).scaffoldBackgroundColor,
               context: context,
               builder: (context) => Padding(padding: EdgeInsets.only(bottom: 70, left: 20, right: 20),
               child: Card(elevation: 20,
@@ -1244,6 +1285,7 @@ Showbottomsheet (context){
                 ),
               color: Theme.of(context).scaffoldBackgroundColor,
               child: Container(
+              color: Theme.of(context).scaffoldBackgroundColor,
                 height: 150,
                 width: double.infinity,
                 child: Column(
@@ -1457,6 +1499,7 @@ onSendMessage(String sticker) async {
 
                       await FirebaseFirestore.instance.collection(widget.id).add({
                         'sticker': sticker,
+                        'color': false,
                         'time': outputFormat.format(DateTime.now()),
                         'sortTime': DateTime.now().toString(),
                         'isImage': isImage,

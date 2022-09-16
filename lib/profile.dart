@@ -39,15 +39,15 @@ Future<String> uploadFile(_image) async {
 
 //..........................................................................................
 
-  Future<void> saveImages(File _image) async {
+  Future<void> saveImages(File _image, String uname, String about) async {
                
               //_image.forEach((image) async {
               String imageURL = await uploadFile(_image);
 
 
               await FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
-                'name': unameController.text.trim(),
-                'about': aboutController.text.trim(),
+                'name': uname,
+                'about': about,
                 'img': imageURL
               });                
 }
@@ -97,7 +97,7 @@ Future<String> uploadFile(_image) async {
       appBar: AppBar(
         backgroundColor: Colors.blueGrey,
         centerTitle: true,
-        title: Text(Globalname, textAlign: TextAlign.center,
+        title: Text("Profile", textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonLI', color: Colors.white70)),
         leading: IconButton(icon: Icon(Icons.arrow_back),
         onPressed: () => Navigator.of(context).pop(),
@@ -226,14 +226,33 @@ SizedBox(height: 10,),
               primary: Colors.blueGrey
              ),  
               onPressed: () async{
-
+              
+              String uname;
+              String about;
               setState(() {
               isLoading = true;
               });
+              if (unameController.text.trim().isEmpty)
+              {
+                uname = snapshot.data['name'];
+              } else {
+                uname = unameController.text.trim();
+              }
 
+              if (aboutController.text.trim().isEmpty)
+              {
+                about = snapshot.data['name'];
+              } else {
+                about = aboutController.text.trim();
+              }
+
+              try{
               deleteFile(snapshot.data['img']);
+              } catch (e){
+                debugPrint("error");
+              }
 
-              await saveImages(_image);
+              await saveImages(_image, uname, about);
               unameController.clear();
               aboutController.clear();
 
@@ -258,9 +277,18 @@ SizedBox(height: 10,),
 }
 Future<File> fileFromImageUrl() async {
 
+    try{
     await collectionReference.collection("Users").doc(user!.email!).get().then((snapshot) {
     image = snapshot.get('img');
      });    
+    } catch(e){
+      image = 'https://firebasestorage.googleapis.com/v0/b/macsapp-f2a0f.appspot.com/o/App%20file%2Fdefault%2Fdownload.png?alt=media&token=ae634acf-dc30-4228-a071-587d9007773e';
+    }
+    
+    if ( image == "")
+    {
+     image = 'https://firebasestorage.googleapis.com/v0/b/macsapp-f2a0f.appspot.com/o/App%20file%2Fdefault%2Fdownload.png?alt=media&token=ae634acf-dc30-4228-a071-587d9007773e';
+    }
 
     final response = await http.get(Uri.parse(image));
 

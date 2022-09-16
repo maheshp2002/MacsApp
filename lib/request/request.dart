@@ -49,11 +49,11 @@ class RequestsState extends State<Requests>{
         Column(mainAxisAlignment: MainAxisAlignment.center,
           children: [
           //Image.asset("assets/nothing.gif"),
-          const Text("Noting is here!", style: TextStyle(color: Colors.grey, fontSize: 20, fontFamily: 'BrandonLI') )
+          Text("Noting is here!", style: TextStyle(color: Theme.of(context).hintColor, fontSize: 20, fontFamily: 'BrandonLI') )
           ],));
         }
 
-        else{
+        else  if (snapshot.hasData) {
            return ListView(
            children: [
           
@@ -167,7 +167,15 @@ class RequestsState extends State<Requests>{
                       ],),
             )),);
               })]);           
+        } else{   
+        return Center(child: 
+        Column(mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+          //Image.asset("assets/nothing.gif"),
+          Text("Noting is here!", style: TextStyle(color: Theme.of(context).hintColor, fontSize: 20, fontFamily: 'BrandonLI') )
+          ],));
         }
+
       })    
     );
 
