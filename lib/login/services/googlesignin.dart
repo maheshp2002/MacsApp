@@ -88,6 +88,7 @@ Future<String> uploadFile(_image) async {
                 'pushToken': "",
                 'showOnline': true,
                 'isOnline': true,
+                'isChattingWith': "",
               });   
               
               setState(() {

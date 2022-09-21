@@ -142,10 +142,12 @@ if (isOnline == true){
   try{
     FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
           'isOnline': false,
+          'isChattingWith': "",
           });
   } catch(e){
     debugPrint(e.toString());
   }
+
 
 }
 // print(isOnline);
@@ -231,7 +233,7 @@ if (isOnline == true){
   ),
   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
 	body: StreamBuilder(
-      stream: FirebaseFirestore.instance.collection(user!.email! + "friends")
+      stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
           .snapshots(),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
          if (!snapshot.hasData) {   
@@ -278,10 +280,14 @@ if (isOnline == true){
                         Globalid = snapshot.data.docs[index]['id'];
                         });
 
+                        FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
+                              'isChattingWith': snapshot.data.docs[index]['id'],
+                      });
+
                         Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => 
                         chat(id: snapshot.data.docs[index]['id'], online: isOnline,)));
-                       // print("###################################################");
-                       // print(isOnline);
+                       print("###############################################################################");
+                       print(snapshot.data.docs[index]['id']);
                       },                       
                     child: StreamBuilder(
                     stream: FirebaseFirestore.instance.collection("Users").doc(snapshot.data.docs[index]['email'])
@@ -382,14 +388,16 @@ if (isOnline == true){
             onPressed: () async { 
               String imgUrl = "";
                         try{
-                        await FirebaseFirestore.instance.collection(dltDocid).where('id', isEqualTo: user!.email!)
+                        await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                        .collection(dltDocid)
                         .get().then((snapshot) {
 
                           snapshot.docs.forEach((documentSnapshot) async {
                             String thisDocId = documentSnapshot.id;
 
                             try{
-                                  await collectionReference.collection(dltDocid).doc(thisDocId).get()
+                                  await collectionReference.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                                  .collection(dltDocid).doc(thisDocId).get()
                                   .then((snapshot) {
                                     setState(() {
                                     imgUrl = snapshot.get('photo');                
@@ -401,7 +409,8 @@ if (isOnline == true){
                                 debugPrint("error");
                           } 
 
-                         FirebaseFirestore.instance.collection(dltDocid).doc(thisDocId).delete();
+                         FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                         .collection(dltDocid).doc(thisDocId).delete();
 
                         });
                         }
@@ -415,7 +424,8 @@ if (isOnline == true){
                           textColor: Colors.white  
                           );                            
                         }              
-            await FirebaseFirestore.instance.collection(user!.email! + "friends").doc(docid).delete();
+            await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
+            .doc(docid).delete();
             Navigator.of(context).pop();  
             Fluttertoast.showToast(  
             msg: 'Friend removed!',  
@@ -701,7 +711,7 @@ class UsersListState extends State<UsersList>{
                         ),),
                       onPressed: () async{
                       try{
-                      await FirebaseFirestore.instance.collection(snapshot.data.docs[index]['email'] + "request").doc(user!.email!).set({
+                      await FirebaseFirestore.instance.collection("Users").doc(snapshot.data.docs[index]['email']).collection(snapshot.data.docs[index]['email'] + "request").doc(user!.email!).set({
                         'Requestname': widget.name,
                         'Requestabout': widget.about,
                         'Requestimg': widget.img,
@@ -852,7 +862,7 @@ class _SearchFeedState extends State<SearchFeed> {
                         ),),
                       onPressed: () async{
                       try{
-                      await FirebaseFirestore.instance.collection(data.email + "request").doc(user!.email!).set({
+                      await FirebaseFirestore.instance.collection("Users").doc(data.email).collection(data.email + "request").doc(user!.email!).set({
                         'Requestname': Globalname,
                         'Requestabout': Globalabout,
                         'Requestimg': Globalimg,

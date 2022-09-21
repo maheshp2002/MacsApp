@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,10 +17,11 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:macsapp/homepage/homeScreen.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import 'package:open_file/open_file.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:photo_view/photo_view.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:assets_audio_player/assets_audio_player.dart';
 
 
 class chat extends StatefulWidget {
@@ -44,8 +48,18 @@ class chatState extends State<chat> {
   var dateFormat = DateFormat(' yyyy-MM-dd - hh:mm a');
   PlatformFile? pickfile;
   bool isBottomSheet = false;
-  //TextEditingController messageController =  TextEditingController();
-  //final collectionReference = FirebaseFirestore.instance;
+  
+  //recording audio
+  late FlutterSoundRecorder _recordingSession;
+  //create a new player
+  final assetsAudioPlayer = AssetsAudioPlayer();
+
+  late String pathToAudio;
+  bool _playAudio = false;
+  String _timerText = '00:00:00';
+  double playbackSpeed = 1;
+  Duration duration = Duration.zero;
+  Duration position = Duration.zero;
 
   ValueNotifier<bool> reply = ValueNotifier(false);
   bool isSelect = false;
@@ -59,7 +73,6 @@ class chatState extends State<chat> {
   
   
 
- // User? user = FirebaseAuth.instance.currentUser;
 //.................................................................................................................
 
   @override
@@ -67,23 +80,156 @@ class chatState extends State<chat> {
     super.initState();
     handleScroll();
     chatView();
+    initializer();
   }  
 
+//initialize...........................................................................................................
+  void initializer() async {
+    pathToAudio = '/sdcard/Download/temp${DateTime.now()}.wav';
+    _recordingSession = FlutterSoundRecorder();
+    await _recordingSession.openAudioSession(
+        focus: AudioFocus.requestFocusAndStopOthers,
+        category: SessionCategory.playAndRecord,
+        mode: SessionMode.modeDefault,
+        device: AudioDevice.speaker);
+    await _recordingSession.setSubscriptionDuration(Duration(
+    milliseconds: 10));
+    await initializeDateFormatting();
+    await Permission.microphone.request();
+    await Permission.storage.request();
+    await Permission.manageExternalStorage.request();
+  }
+
+//start record...........................................................................................................
+  Future<void> startRecording() async {
+
+    setState(() {
+      _playAudio = true;
+    });
+
+    Directory directory = Directory(path.dirname(pathToAudio));
+    if (!directory.existsSync()) {
+      directory.createSync();
+    }
+    _recordingSession.openAudioSession();
+    await _recordingSession.startRecorder(
+      toFile: pathToAudio,
+      codec: Codec.pcm16WAV,
+    );
+    StreamSubscription _recorderSubscription =
+      _recordingSession.onProgress!.listen((e) {
+      var date = DateTime.fromMillisecondsSinceEpoch(
+      e.duration.inMilliseconds,
+          isUtc: true);
+      var timeText = DateFormat('mm:ss:SS', 'en_GB').format(date);
+      setState(() {
+        _timerText = timeText.substring(0, 8);
+      });
+    });
+    _recorderSubscription.cancel();
+
+    Showbottomsheet(context);
+  }
+
+
+//stop record...........................................................................................................
+  Future<String?> stopRecording() async {
+    _recordingSession.closeAudioSession();
+    setState(() {
+      _playAudio = false;
+    });
+    File file = File(pathToAudio);
+
+    String fileName = file.path.split('/').last;
+
+    saveAudio(file, fileName);
+
+    return await _recordingSession.stopRecorder();
+  }
+
+// //Play audio preview...........................................................................................................
+//   Future<void> playFunc() async {
+//     recordingPlayer.open(
+//       Audio.file(pathToAudio),
+//       autoStart: true,
+//       showNotification: true,
+//     );
+//   }
+
+//Play audio network...........................................................................................................
+  Future<void> playFuncNetwork(String url, artist, title, id) async {
+
+
+    FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+    .collection(Globalid).doc(id).update({
+        'isPlaying': true
+    });
+
+    assetsAudioPlayer.open(
+      Audio.network(url,
+          metas: Metas(
+            title:  title,
+            artist: artist,
+            image: MetasImage.asset("assets/logo.png"),
+          ),
+      playSpeed: playbackSpeed,
+      ),
+      notificationSettings: NotificationSettings(
+          nextEnabled: false,
+          prevEnabled: false,
+          customStopAction: (AssetsAudioPlayer) async{
+
+          FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+          .collection(Globalid).doc(id).update({
+              'isPlaying': false
+          });
+            assetsAudioPlayer.stop(); 
+          }
+      ),
+      autoStart: true,
+      showNotification: true,
+      
+    );
+
+  }
+
+//stop play...........................................................................................................
+  Future<void> stopPlayFunc(String id) async {
+    FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+    .collection(Globalid).doc(id).update({
+        'isPlaying': false
+    });
+    assetsAudioPlayer.stop();
+  }
+
+// //pause play...........................................................................................................
+//   pausePlayFunc() {
+//     setState(() {
+//       NetworkAudioPlay = false;
+//     });
+//     assetsAudioPlayer.pause();
+//   }
 
 //chat view.........................................................................................................
     chatView() async{
                         try{
-                        await FirebaseFirestore.instance.collection(Globalid).where('id', isNotEqualTo: user!.email!)
+                        await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                        .collection(Globalid).where('id', isNotEqualTo: user!.email!)
                         .get().then((snapshot) {
 
                           snapshot.docs.forEach((documentSnapshot) async {
                             String thisDocId = documentSnapshot.id;
 
                           try{
-                            FirebaseFirestore.instance.collection(Globalid).doc(thisDocId).update({
+                            FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                            .collection(Globalid).doc(thisDocId).update({
                               'color': color,
                             });
 
+                            FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("chat").doc("Users")
+                            .collection(user!.email!).doc(thisDocId).update({
+                              'color': color,
+                            });
                           } catch (e){
                                 debugPrint("error");
                           } 
@@ -150,14 +296,59 @@ Future<String> uploadFile(_image) async {
 //..........................................................................................
 
   Future<void> saveImages(File _image) async {
-               
+    String id = "";
+    String isChattingWith = "";
               //_image.forEach((image) async {
               String imageURL = await uploadFile(_image);
+              try{
+              await collectionReference.collection("Users").doc(widget.id).get()
+                .then((snapshot) {
+                setState(() {
+                isChattingWith = snapshot.get('isChattingWith');                
+              });
+              });
+              } catch (e){
+                debugPrint("error");
+              }
 
                   try{
-                      await FirebaseFirestore.instance.collection(widget.id).add({
+                      await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                      .collection(widget.id).add({
                         'photo': imageURL,
-                        'color': false,
+                        'color': isChattingWith == user!.email! ? true : false,
+                        'photoname': photoname,
+                        'isImage': isImage,
+                        'time': outputFormat.format(DateTime.now()),
+                        'sortTime': DateTime.now().toString(),
+                        'id': user!.email!,   
+                        'reply': reply.value,
+                        'replyName': replyName,
+                        'replyMsg': replyMsg,
+                        'name': Globalname, 
+                        'cat': 2,   
+                        'cat1': category,      
+                        'isSelected': false,   
+                        'date': dateFormat.format(DateTime.now())    
+                      }).then((value) =>(
+
+                       id = value.id
+
+                      )).catchError((error) => debugPrint("Failed to add user: $error"));  
+                     
+                      } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white); 
+                                    }   
+//........................................................................................................
+                  try{
+                      await FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("chat").doc("Users")
+                      .collection(user!.email!).doc(id).set({
+                        'photo': imageURL,
+                        'color': isChattingWith == user!.email! ? true : false,
                         'photoname': photoname,
                         'isImage': isImage,
                         'time': outputFormat.format(DateTime.now()),
@@ -180,7 +371,101 @@ Future<String> uploadFile(_image) async {
                                     gravity: ToastGravity.BOTTOM,  
                                     backgroundColor: Colors.blueGrey,  
                                     textColor: Colors.white); 
+                                    }                                       
+                setState(() {
+                  cat = 1;
+                  isImage = true;
+                  reply = ValueNotifier<bool>(false);
+                }); 
+                    
+}
+
+//..........................................................................................
+
+  Future<void> saveAudio(File _audio, String fileName) async {
+    String id = "";
+    String isChattingWith = "";
+               
+              String audioURL = await uploadFile(_audio);
+
+              try{
+              await collectionReference.collection("Users").doc(widget.id).get()
+                .then((snapshot) {
+                setState(() {
+                isChattingWith = snapshot.get('isChattingWith');                
+              });
+              });
+              } catch (e){
+                debugPrint("error");
+              }
+
+
+                  try{
+                      await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                      .collection(widget.id).add({
+                        'photo': audioURL,   
+                        'audioname': fileName,
+                        'color': isChattingWith == user!.email! ? true : false,
+                        'time': outputFormat.format(DateTime.now()),
+                        'sortTime': DateTime.now().toString(),
+                        'id': user!.email!,   
+                        'reply': reply.value,
+                        'replyName': replyName,
+                        'replyMsg': replyMsg,
+                        'name': Globalname, 
+                        'cat1': category,      
+                        'isSelected': false,  
+                        'cat': 4, 
+                        'isPlaying': false,
+                        'isPause': false,
+                        'date': dateFormat.format(DateTime.now())    
+                      }).then((value) =>(
+
+                       id = value.id
+
+                      )).catchError((error) => debugPrint("Failed to add user: $error"));  
+                     
+                      } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white); 
                                     }   
+//...............................................................................................................
+     
+
+                  try{
+                      await FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("chat").doc("Users")
+                      .collection(user!.email!).doc(id).set({
+                        'photo': audioURL,   
+                        'audioname': fileName,
+                        'color': isChattingWith == user!.email! ? true : false,
+                        'time': outputFormat.format(DateTime.now()),
+                        'sortTime': DateTime.now().toString(),
+                        'id': user!.email!,   
+                        'reply': reply.value,
+                        'replyName': replyName,
+                        'replyMsg': replyMsg,
+                        'name': Globalname, 
+                        'cat1': category,      
+                        'isSelected': false,  
+                        'cat': 4, 
+                        'isPlaying': false,
+                        'isPause': false,
+                        'date': dateFormat.format(DateTime.now())    
+                      });  
+                     
+                      } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white); 
+                                    }        
+                                                                   
                 setState(() {
                   cat = 1;
                   isImage = true;
@@ -227,6 +512,13 @@ Future<String> uploadFile(_image) async {
   @override
   Widget build(BuildContext context) {
 
+//format duration..................................................................................................
+  String formatDuration(Duration? duration) {
+  String hours = duration!.inHours.toString().padLeft(0, '2');
+  String minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+  String seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+  return "$hours:$minutes:$seconds";
+}  
 //stickerview......................................................................................................
    _sticker(String date, String name)  async{ 
      await showDialog(
@@ -302,40 +594,171 @@ Future<String> uploadFile(_image) async {
     return Future.value(false);
   }
 
-selectedItem(String name) async{
+selectedItem() async{
+     await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          title: Text("Do you want to delete your messages?", textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),
+          
+          content: Text("This will delete all the selected messages. Media will be deleted for both users..!", textAlign: TextAlign.center,
+          style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),                    
+          
+          actions: <Widget>[
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Theme.of(context).scaffoldBackgroundColor
+             ),               
+            child: Text('Cancel',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
+            onPressed: () {  
+              Navigator.of(context).pop();  
+            },  
+          ),  
+          
+          SizedBox(width: 30,),
+
+          Column(children: [
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Theme.of(context).scaffoldBackgroundColor
+             ),               
+            child: Text('Delete for me',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
+            onPressed: () async { 
+//..............................................................................................
+              String imgUrl = "";
+              String id = "";
+                
+              Fluttertoast.showToast(  
+              msg: 'Deleting message may take a while...!\n Media will be deleted for both users..!',  
+              toastLength: Toast.LENGTH_LONG,  
+              gravity: ToastGravity.BOTTOM,  
+              backgroundColor: Colors.blueGrey,  
+              textColor: Colors.white);  
+
+                for (var i = 0 ; i <= growableList.length - 1 ; i++){
+                  try{
+                        await collectionReference.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                        .collection(widget.id).doc(growableList[i]).get()
+                        .then((snapshot) {
+                          setState(() {
+                          imgUrl = snapshot.get('photo');
+                          id = snapshot.get('id');                
+                          });
+                    }); 
+                    if(id == user!.email!){ 
+                    await FirebaseStorage.instance.refFromURL(imgUrl).delete(); 
+                    }
+
+                } catch (e){
+                      debugPrint("error");
+                } 
+
+                  FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                  .collection(widget.id).doc(growableList[i]).delete();
+
+                } 
+              growableList.clear();
+              Navigator.of(context).pop();  
+            // print("###################################################");  
+            // print(widget.id);                
+//..............................................................................................            
+
+            // Fluttertoast.showToast(  
+            // msg: 'Deleting messages may take a while..!',  
+            // toastLength: Toast.LENGTH_LONG,  
+            // gravity: ToastGravity.BOTTOM,  
+            // backgroundColor: Colors.blueGrey,  
+            // textColor: Colors.white  
+            // );  
+            }, 
+            ),
+          
+          SizedBox(height: 10,),
+
+          ElevatedButton(  
+            style: ElevatedButton.styleFrom(
+              primary: Theme.of(context).scaffoldBackgroundColor
+             ),               
+            child: Text('Delete for everyone',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
+            onPressed: () async { 
+//..............................................................................................
+              String imgUrl = "";
+              String id = "";
+                
+              Fluttertoast.showToast(  
+              msg: 'Deleting message may take a while...\n Only messages that you sent will be deleted..!',  
+              toastLength: Toast.LENGTH_LONG,  
+              gravity: ToastGravity.BOTTOM,  
+              backgroundColor: Colors.blueGrey,  
+              textColor: Colors.white);  
+
+              for (var i = 0 ; i <= growableList.length - 1 ; i++){
+                  try{
+                        await collectionReference.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                        .collection(widget.id).doc(growableList[i]).get()
+                        .then((snapshot) {
+                          setState(() {
+                          id = snapshot.get('id');           
+                          imgUrl = snapshot.get('photo');     
+                          });
+                    });  
+
+                  if (id == user!.email!){
+                  
+                  await FirebaseStorage.instance.refFromURL(imgUrl).delete(); 
+
+                  }
+                  } catch (e){
+                  //print("###################################################");
+                  debugPrint("error in image");
+                } 
 
 
-  String imgUrl = "";
-  if (name == "itemDelete") {
-    
-  Fluttertoast.showToast(  
-  msg: 'Deleting message may take a while...!',  
-  toastLength: Toast.LENGTH_LONG,  
-  gravity: ToastGravity.BOTTOM,  
-  backgroundColor: Colors.blueGrey,  
-  textColor: Colors.white);  
+              try{
+                  await collectionReference.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                 .collection(widget.id).doc(growableList[i]).get()
+                 .then((snapshot) {
+                    setState(() {
+                    id = snapshot.get('id');           
+                    });
+                 }); 
 
-    for (var i = 0 ; i <= growableList.length - 1 ; i++){
-       try{
-            await collectionReference.collection(widget.id).doc(growableList[i]).get()
-            .then((snapshot) {
-              setState(() {
-              imgUrl = snapshot.get('photo');                
-              });
-        });  
-        await FirebaseStorage.instance.refFromURL(imgUrl).delete(); 
+                if (id == user!.email!){ 
 
-     } catch (e){
-          debugPrint("error");
-     } 
+                  try{
+                  await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                  .collection(widget.id).doc(growableList[i]).delete();
+                  } catch(e){
+                  //print("###################################################");
+                    debugPrint("error in deliting other side mssg");
+                  }
 
-      FirebaseFirestore.instance.collection(widget.id).doc(growableList[i]).delete();
+                  try{
+                  await FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("chat").doc("Users")
+                  .collection(user!.email!).doc(growableList[i]).delete();
+                  } catch(e){
+                  print("###################################################");
+                    debugPrint("error in deliting our side mssg");
+                  }
+                }
 
-    } 
-        
-    }else {
-      Navigator.of(context).pop();
-    }
+              } catch (e){
+               print("###################################################");
+                debugPrint("error in deliting mssg no id ");
+             } 
+
+
+              }
+            growableList.clear();
+//..............................................................................................            
+            Navigator.of(context).pop();  
+
+            }, 
+            ),
+          ]),
+        ]),
+        ); 
 }
 ClearMessage() async{
      await showDialog(
@@ -345,7 +768,7 @@ ClearMessage() async{
           title: Text("Do you want to delete all your messages?", textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),
           
-          content: Text("This will delete all the messages you sent permenantly for both users.", textAlign: TextAlign.center,
+          content: Text("This will delete all the messages permenantly for you..! Media will be deleted for both users..!", textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor,fontWeight: FontWeight.bold)),                    
           
           actions: <Widget>[
@@ -365,27 +788,34 @@ ClearMessage() async{
             child: Text('Delete',style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor)),  
             onPressed: () async { 
               String imgUrl = "";
+              String id = "";
                         try{
-                        await FirebaseFirestore.instance.collection(Globalid).where('id', isEqualTo: user!.email!)
+                        await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                        .collection(Globalid)
                         .get().then((snapshot) {
 
                           snapshot.docs.forEach((documentSnapshot) async {
                             String thisDocId = documentSnapshot.id;
 
                             try{
-                                  await collectionReference.collection(Globalid).doc(thisDocId).get()
+                                  await collectionReference.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                                  .collection(Globalid).doc(thisDocId).get()
                                   .then((snapshot) {
                                     setState(() {
-                                    imgUrl = snapshot.get('photo');                
+                                    imgUrl = snapshot.get('photo');    
+                                    id = snapshot.get('id');             
                                     });
                               });  
+                              if (id == user!.email!){
                               await FirebaseStorage.instance.refFromURL(imgUrl).delete(); 
+                              }
 
                           } catch (e){
                                 debugPrint("error");
                           } 
 
-                         FirebaseFirestore.instance.collection(Globalid).doc(thisDocId).delete();
+                         FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                         .collection(Globalid).doc(thisDocId).delete();
 
                         });
                         }
@@ -414,8 +844,36 @@ ClearMessage() async{
           ],
         ));  
 }
+
+popFunction() {
+  Navigator.of(context).pop();
+  try{
+  FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
+    'isChattingWith': "",
+  });
+  } catch(e){
+  debugPrint("error");
+}
+}
+
+Future<bool> _onBackPressed() async{
+try{
+Navigator.of(context).pop();
+await FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
+  'isChattingWith': "",
+  });
+} catch(e){
+  debugPrint("error");
+}
+
+return Future.value(false);
+
+}
 //..........................................................................................
-    return Scaffold(
+    return WillPopScope(
+    onWillPop: _onBackPressed,
+    child:
+    Scaffold(
       floatingActionButton:  Visibility(
       visible: _show,
       child:Container(padding: EdgeInsets.only(bottom: 40),
@@ -447,7 +905,7 @@ ClearMessage() async{
 
               if (item.name == "itemClearMsg") {
               Fluttertoast.showToast(  
-              msg: 'This will delete all the message you sent for both users...!',  
+              msg: 'This will clear all the message...! Media will be deleted for both users..!',  
               toastLength: Toast.LENGTH_LONG,  
               gravity: ToastGravity.BOTTOM,  
               backgroundColor: Colors.blueGrey,  
@@ -460,7 +918,8 @@ ClearMessage() async{
               if (showOnline == true) {
                 
                 FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
-                  'showOnline': false
+                  'showOnline': false,
+                  'isOnline': false
                 });
 
 
@@ -471,7 +930,8 @@ ClearMessage() async{
               } else {
 
                 FirebaseFirestore.instance.collection("Users").doc(user!.email!).update({
-                  'showOnline': true
+                  'showOnline': true,
+                  'isOnline': true
                 });
 
 
@@ -482,9 +942,18 @@ ClearMessage() async{
               }
 
               }
-              else {      
+              else if (item.name == "itemDelete") {   
+             Fluttertoast.showToast(  
+              msg: 'Your are going to delete selected messages...!\n Media will be deleted for both users...!',  
+              toastLength: Toast.LENGTH_LONG,  
+              gravity: ToastGravity.BOTTOM,  
+              backgroundColor: Colors.blueGrey,  
+              textColor: Colors.white);        
+   
 
-                selectedItem(item.name);
+                selectedItem();
+              } else {
+                Navigator.of(context).pop();
               }
               },
 
@@ -525,7 +994,7 @@ ClearMessage() async{
                   ]),
         ],     
         leading: IconButton(icon: Icon(Icons.arrow_back, color: Colors.white60,),
-        onPressed: () => Navigator.of(context).pop(),
+        onPressed: () => popFunction(),
         ),
         title: StreamBuilder(
         stream: FirebaseFirestore.instance.collection("Users").doc(Globalmail)
@@ -602,7 +1071,8 @@ ClearMessage() async{
                   Expanded(child: 
 //....................................................................................................................
      StreamBuilder(
-      stream: FirebaseFirestore.instance.collection(Globalid).orderBy("sortTime").snapshots(),
+      stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+      .collection(Globalid).orderBy("sortTime").snapshots(),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
          if (!snapshot.hasData) {   
         return  Center(child: 
@@ -627,78 +1097,15 @@ ClearMessage() async{
 
                   return 
                 Stack(
-                  children: [
-                                 
-                  //GestureDetector(
-                
-                // onHorizontalDragEnd: (DragEndDetails details) async{
-                //   if (details.primaryVelocity! > 0) {
-
-                //   if(snapshot.data.docs[index]["cat"] == 1){    
-                //     setState(() {
-                      
-                //         reply = ValueNotifier<bool>(true);
-                //         replyMsg = snapshot.data.docs[index]["sticker"];
-                //         replyName = snapshot.data.docs[index]["name"];   
-                //         category = 1;                                       
-                //     });                
-                //         Fluttertoast.showToast(  
-                //                     msg:"Replying to sticker \n double tap on message to view.!",  
-                //                     toastLength: Toast.LENGTH_LONG,  
-                //                     gravity: ToastGravity.BOTTOM,  
-                //                     backgroundColor: Colors.blueGrey,  
-                //                     textColor: Colors.white); 
-
-                //   } else if(snapshot.data.docs[index]["cat"] == 2){
-                //     setState(() {
-                      
-                //          reply = ValueNotifier<bool>(true);
-                //         replyMsg = snapshot.data.docs[index]["photo"];
-                //         replyName = snapshot.data.docs[index]["name"];  
-                //         category = 2;                                        
- 
-                //     });
-                //         Fluttertoast.showToast(  
-                //                     msg:"Replying to photo \n double tap on message to view.!",  
-                //                     toastLength: Toast.LENGTH_LONG,  
-                //                     gravity: ToastGravity.BOTTOM,  
-                //                     backgroundColor: Colors.blueGrey,  
-                //                     textColor: Colors.white);                     
-                //   } else {
-                //     setState(() {
-                      
-                //         reply = ValueNotifier<bool>(true);
-                //         replyMsg = snapshot.data.docs[index]["msg"];
-                //         replyName = snapshot.data.docs[index]["name"];   
-                //         category = 3;   
-                //     });
-                //         Fluttertoast.showToast(  
-                //                     msg:"Replying to " + replyMsg.toString() + "\n double tap on message to view.!",  
-                //                     toastLength: Toast.LENGTH_LONG,  
-                //                     gravity: ToastGravity.BOTTOM,  
-                //                     backgroundColor: Colors.blueGrey,  
-                //                     textColor: Colors.white);                     
-                //   }                 
-                //   }
-                // if (details.primaryVelocity! < 0) {
-
-                //     setState(() {
-                //         reply = ValueNotifier<bool>(false);
-                //         replyMsg = "";
-                //         replyName = "";     
-                //     });
-                //   }
-                  
-                //   },
-                  
-                //  child: 
+                  children: [ 
                  InkWell(
                   onLongPress: () async {
-                  if (snapshot.data.docs[index]["id"] == user!.email!){
+                  //if (snapshot.data.docs[index]["id"] != user!.email!){
                     if(snapshot.data.docs[index]["isSelected"] == true){
                      
                      for (var i = 0 ; i <= growableList.length - 1 ; i++){
-                     await FirebaseFirestore.instance.collection(Globalid).doc(growableList[i]).update({
+                     await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                     .collection(widget.id).doc(growableList[i]).update({
                         'isSelected': false                
                       });  
                      }
@@ -708,14 +1115,15 @@ ClearMessage() async{
                      });
 
                     }  
-                  }                 
+                  //}                 
                   },                    
                   onDoubleTap: () async{ 
-                  if (snapshot.data.docs[index]["id"] == user!.email!){
+                 // if (snapshot.data.docs[index]["id"] != user!.email!){
 
                     if(snapshot.data.docs[index]["isSelected"] == true){
 
-                     await FirebaseFirestore.instance.collection(Globalid).doc(snapshot.data.docs[index].id).update({
+                     await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                     .collection(widget.id).doc(snapshot.data.docs[index].id).update({
                         'isSelected': false                
                       });  
 
@@ -726,16 +1134,19 @@ ClearMessage() async{
 
                     } else {
 
-                     await FirebaseFirestore.instance.collection(Globalid).doc(snapshot.data.docs[index].id).update({
+                     await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                     .collection(widget.id).doc(snapshot.data.docs[index].id).update({
                         'isSelected': true                
                       });  
 
                     setState(() {
                       growableList.add(snapshot.data.docs[index].id);
+                     // print("###########################################################");
+                      //print(growableList);
                     });                   
                     
                     }
-                    }
+                   // }
                   },
 
                   child: 
@@ -745,8 +1156,7 @@ ClearMessage() async{
                     padding: EdgeInsets.only(left: 14,right: 14,top: 10,bottom: 10),
                     child: Align(
                       alignment: (snapshot.data.docs[index]["id"] != user!.email! ? Alignment.topLeft : Alignment.topRight),
-                      child: 
-                      Container(
+                      child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
                           color: (snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).cardColor : Colors.blue[200]),
@@ -795,8 +1205,9 @@ ClearMessage() async{
                                 color: Colors.blue[50],
                                 child: 
                                 Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonLI'),))])
-
-                                : Column(children: [  
+                               
+                                : snapshot.data.docs[index]["cat1"] == 3 ? 
+                                Column(children: [  
                                 Container(width: 150,alignment: Alignment.center,
                                 color: Colors.blue[100],
                                 child:                               
@@ -806,6 +1217,18 @@ ClearMessage() async{
                                 child: 
                                 Text(snapshot.data.docs[index]["replyMsg"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonLI'),)),
                               ],)
+
+                                 
+                                : Column(children: [
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[100],
+                                child: 
+                                Text(snapshot.data.docs[index]["replyName"], style: TextStyle(color: Colors.blueGrey, fontSize: 10,fontFamily: 'BrandonBI'),)),
+                                Container(width: 150,alignment: Alignment.center,
+                                color: Colors.blue[50],
+                                child: 
+                                Text(snapshot.data.docs[index]["replyMsg"], style: TextStyle(color: Colors.blueGrey,fontSize: 15,fontFamily: 'BrandonLI'),))]),
+
                             ),)
                           ]else...[
                             Text("")
@@ -834,23 +1257,135 @@ ClearMessage() async{
                         Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 10,fontFamily: 'BrandonLI'),))]))
                         )
                         
-                        : InkWell(
+                        : snapshot.data.docs[index]["cat"] == 3 ? 
+                        InkWell(
                         onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["msg"]),
                         child:                          
-                        Text(snapshot.data.docs[index]["msg"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 15,fontFamily: 'BrandonBI'),)),
+                        Text(snapshot.data.docs[index]["msg"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 15,fontFamily: 'BrandonBI'),))
+
+                        : InkWell(
+                        onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["audioname"]),
+                        child: Row(
+                        children: [   
+
+                        IconButton(onPressed: () {
+                          if (snapshot.data.docs[index]["isPlaying"] == true){
+                            FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                            .collection(Globalid).doc(snapshot.data.docs[index].id).update({
+                              'isPlaying': false
+                            });
+                            assetsAudioPlayer.pause();
+                          } else {
+                            playFuncNetwork(snapshot.data.docs[index]["photo"], snapshot.data.docs[index]["audioname"], snapshot.data.docs[index]["name"], snapshot.data.docs[index].id);
+                          }
+                        }, 
+                        icon: Icon(snapshot.data.docs[index]["isPlaying"]== true ? Icons.stop : Icons.play_arrow, color: Theme.of(context).hintColor, size: 30,)),
+
+                        snapshot.data.docs[index]["isPlaying"] == true ? IconButton(onPressed: () {
+                          if (snapshot.data.docs[index]["isPause"] == false){
+                            FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                            .collection(Globalid).doc(snapshot.data.docs[index].id).update({
+                              'isPause': true
+                            });
+
+                            assetsAudioPlayer.pause();
+                          } else {
+
+                            FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                            .collection(Globalid).doc(snapshot.data.docs[index].id).update({
+                              'isPause': false
+                            });
+
+                            assetsAudioPlayer.play();
+                          }
+                        }, 
+                        icon: Icon(snapshot.data.docs[index]["isPause"] == true ? Icons.play_circle_outline : Icons.pause_circle_outline, color: Theme.of(context).hintColor, size: 30,))
+                        : Text(""),
+                                                
+                        Flexible( 
+                        child: SizedBox(width: 55, height: 20,
+                        child: ElevatedButton(
+                        style:  ElevatedButton.styleFrom(
+                        primary: Theme.of(context).hintColor
+                        ),
+                          onPressed: (){
+                          if (playbackSpeed == 0.5){
+                            setState(() {
+                              playbackSpeed = 1;
+                            });
+                          } else if (playbackSpeed == 1){
+                            setState(() {
+                              playbackSpeed = 1.5;
+                            });
+                          } else if (playbackSpeed == 1.5){
+                            setState(() {
+                              playbackSpeed = 2;
+                            });
+                          } else {
+                            setState(() {
+                              playbackSpeed = 0.5;
+                            });
+                          }
+                        }, child: Text(playbackSpeed.toString() + "x", style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 10,fontFamily: 'BrandonL',),)
+                        ))),
+
+                        snapshot.data.docs[index]["isPlaying"] != true ?
+                        Flexible(child: 
+                        Text(snapshot.data.docs[index]["audioname"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 15,fontFamily: 'BrandonBI'),))
                         
+                        : Text(""),
+
+                        snapshot.data.docs[index]["isPlaying"] == true ?
+                        Column(mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                        //Flexible(child: 
+                        SizedBox(width: 150,
+                        child:
+                        assetsAudioPlayer.builderRealtimePlayingInfos(
+                            builder: (context, RealtimePlayingInfos? infos) {
+                          if (infos == null) {
+                            return SizedBox();
+                          }
+
+                        return Slider(
+                        thumbColor: Theme.of(context).hintColor,
+                        activeColor: Theme.of(context).hintColor,
+                        inactiveColor: Theme.of(context).hintColor,
+                        min: 0,
+                        max: infos.duration.inSeconds.toDouble(),
+                        value: infos.currentPosition.inSeconds.toDouble(),
+                        onChanged: (value) async {
+                          final position = Duration(seconds: value.toInt());
+                          await assetsAudioPlayer.seek(position);
+                        },
+                      );
+                      })
+                      ),//),
+                      StreamBuilder(
+                        stream: assetsAudioPlayer.currentPosition,
+                        builder: (context, AsyncSnapshot<Duration> asyncSnapshot) {
+                            final Duration? duration = asyncSnapshot.data ?? Duration(hours: 00, minutes: 00, seconds: 00);
+
+                            return Text(formatDuration(duration), style: TextStyle(color: Theme.of(context).hintColor,fontSize: 10,fontFamily: 'BrandonL'),);  
+                        }),
+                         ])
+                      : Text("")
+                      ],)),
+                        
+                        
+                        //Align(alignment: Alignment.centerRight,
+                        //child:
                         SizedBox(width: 80, child:
                         Row(mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                         Text(snapshot.data.docs[index]["time"], style: TextStyle(color: Theme.of(context).hintColor, fontSize: 10,fontFamily: 'BrandonLI'),),
                         SizedBox(width: 5,),
-                        Icon(Icons.check, color: snapshot.data.docs[index]["color"] == true ? Colors.blue: Colors.grey[500], size: 15,)
-                        ],),),
+                        Icon(Icons.check, color: snapshot.data.docs[index]["color"] == true ? Color.fromARGB(255, 1, 248, 9): Colors.grey[500], size: 15,)
+                        ],),)//),
 
                         ],)
                       ),
-                    ),
-                  )),
+       ))),
                   // CircleAvatar(
                   //   child:
                   SizedBox(width: 10,),  
@@ -898,7 +1433,7 @@ ClearMessage() async{
                     //                 gravity: ToastGravity.BOTTOM,  
                     //                 backgroundColor: Colors.blueGrey,  
                     //                 textColor: Colors.white);  
-                     } else{
+                     } else {
                     setState(() {                     
                         reply = ValueNotifier<bool>(true);
                         photoname = snapshot.data.docs[index]["photoname"];
@@ -915,7 +1450,7 @@ ClearMessage() async{
                         //             backgroundColor: Colors.blueGrey,  
                         //             textColor: Colors.white);                        
                     }                   
-                  } else {
+                  } else if(snapshot.data.docs[index]["cat"] == 3){
                     setState(() {                      
                         reply = ValueNotifier<bool>(true);
                         replyMsg = snapshot.data.docs[index]["msg"];
@@ -928,6 +1463,15 @@ ClearMessage() async{
                         //             gravity: ToastGravity.BOTTOM,  
                         //             backgroundColor: Colors.blueGrey,  
                         //             textColor: Colors.white);                     
+                  } else {
+                    setState(() {                      
+                        reply = ValueNotifier<bool>(true);
+                        photoname = snapshot.data.docs[index]["audioname"];
+                        replyMsg = snapshot.data.docs[index]["audioname"];
+                        replyName = snapshot.data.docs[index]["name"];   
+                        category = 4;   
+                    });
+                    
                   }
                   }, 
                   child: Icon(Icons.reply,color: Colors.blueGrey,))),
@@ -949,7 +1493,8 @@ ClearMessage() async{
       Align(alignment: Alignment.bottomCenter,
       child: 
       StreamBuilder(
-      stream: FirebaseFirestore.instance.collection(widget.id).snapshots(),
+      stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+      .collection(widget.id).snapshots(),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
          if (!snapshot.hasData) {  
         return Row(mainAxisAlignment: MainAxisAlignment.start,
@@ -966,18 +1511,9 @@ ClearMessage() async{
           }, 
           icon: //cat != 2 ? 
           Icon(FontAwesomeIcons.upload, color: Theme.of(context).hintColor,)
-          // : isloading == false ?
-          // ClipRRect( 
-          //   child: Image.file(
-          //     _image,
-          //     width: 30,
-          //     height: 30,
-          //     fit: BoxFit.fill
-          //     ),)
-          // : CircularProgressIndicator(color: Colors.blueGrey,)
+
           ),
 
-          SizedBox(width: 5,),
 
             Expanded(child: Container(
             constraints: BoxConstraints(maxHeight: 200),
@@ -1133,76 +1669,23 @@ ClearMessage() async{
           }, 
           icon: Icon(CupertinoIcons.smiley, color: Theme.of(context).hintColor,)),
 
-          SizedBox(width: 5,),
-// //.........................................................................................................
-//           IconButton(onPressed: () async {
-//             setState(() {
-//               isImage = true;
-//               cat = 2;
-//               isShowSticker = false ;
-//             });
+          SizedBox(width: 1,),
+//.........................................................................................................          
 
-//             getImage(true);              
-//             //selectFile;
+          IconButton(onPressed: () async{
+            setState(() {
+              isShowSticker = false;
+            });
 
-//             // final result = await FilePicker.platform.pickFiles(allowMultiple: false);
-//             // if(result == null) return;
+            _playAudio == true ? stopRecording() : startRecording();
+           //startRecording();
 
-//             // setState(() {
-//             //   pickfile = result.files.first;
-//             // _image = File(pickfile!.path!);
-//             //   photoname = pickfile!.name;
-//             // });
-          
-            
+          }, 
+          icon: Icon(_playAudio == true ? CupertinoIcons.stop_circle : CupertinoIcons.mic_solid, color: Theme.of(context).hintColor,)),
 
-//           }, 
-//           icon: cat != 2 ? 
-//           Icon(CupertinoIcons.photo, color: Colors.blueGrey,)
-//           : isImage == true ? 
-//           isloading == false ?         
-//           ClipRRect( 
-//             child: Image.file(
-//               _image,
-//               width: 30,
-//               height: 30,
-//               fit: BoxFit.fill
-//               ),)
-//           : CircularProgressIndicator(color: Colors.blueGrey,)
-//           : Icon(CupertinoIcons.photo, color: Colors.blueGrey,)
-//           ),
-// //.........................................................................................................
-//           SizedBox(width: 5,),
+          SizedBox(width: 1,),
+//.........................................................................................................          
 
-//           IconButton(onPressed: () async {
-//             setState(() {
-//               isImage = false;
-//               cat = 2;
-//               isShowSticker = false ;
-//             });
-
-//             final result = await FilePicker.platform.pickFiles(allowMultiple: false);
-//             if(result == null) return;
-
-//             setState(() {
-//               pickfile = result.files.first;
-//               _image = File(pickfile!.path!);
-//               photoname = pickfile!.name;
-//             });
-                     
-
-//           }, 
-//           icon: cat != 2 ? 
-//           Icon(CupertinoIcons.folder, color: Colors.blueGrey,)
-//            : isImage == false ? isloading == false ?  
-//           Material(
-//           color: Colors.white,elevation: 10,
-//           child: Text("pickfile!.name", textAlign: TextAlign.center,
-//           style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 10, color: Colors.blueGrey,fontWeight: FontWeight.bold)))
-//           : CircularProgressIndicator(color: Colors.blueGrey,)
-//           : Icon(CupertinoIcons.folder, color: Colors.blueGrey,)
-//           ),
-// //.........................................................................................................
           IconButton(onPressed: () async {
             setState(() {
               isShowSticker = false ;
@@ -1226,15 +1709,16 @@ ClearMessage() async{
           style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 10, color: Colors.blueGrey,fontWeight: FontWeight.bold))
           : CircularProgressIndicator(color: Theme.of(context).hintColor,)
           ),
+          
+          SizedBox(width: 1,),
 //.........................................................................................................
-          SizedBox(width: 5,),
 
               Expanded(child: 
               InkWell(child: Container(
               constraints: BoxConstraints(maxHeight: 50),
               child:
                TextFormField(
-                enabled: cat == 1? true : false,
+                enabled: _playAudio != true ? cat == 1 ? true : false : false,
                 controller: messageController,
                 keyboardType: TextInputType.multiline,
                 maxLines: null,
@@ -1244,14 +1728,30 @@ ClearMessage() async{
                 ),
                 textCapitalization: TextCapitalization.words,
                 decoration:  InputDecoration(
-                  hintText: cat == 1? 'Type down your message' : 'Tap here cancel media select',
+                  hintText: _playAudio != true ? cat == 1? 'Type down your message' : 'Tap here cancel media select' : 'Tap here cancel recording' ,
                   border: UnderlineInputBorder(),
                 ),
               )),
-              onTap: () {
-                setState(() {
-                  cat = 1;
-                });
+              onTap: () async{
+                if (_playAudio != true) {
+
+                  setState(() {
+                    cat = 1;
+                  });
+
+                } else {
+
+                _recordingSession.closeAudioSession();
+
+                  setState(() {
+                    _playAudio = false;
+                  });
+
+               //File file = File(pathToAudio);
+               
+               await _recordingSession.stopRecorder();
+
+                }
               }
                ),
               ),
@@ -1269,11 +1769,59 @@ ClearMessage() async{
 
                   String message = messageController.text.trim();
                   messageController.clear();  
+                  String id = "";
+                  String isChattingWith = "";
+
+              try{
+              await collectionReference.collection("Users").doc(widget.id).get()
+                .then((snapshot) {
+                setState(() {
+                isChattingWith = snapshot.get('isChattingWith');                
+              });
+              });
+              } catch (e){
+                debugPrint("error");
+              }
+
 
                  try{ 
-                      await FirebaseFirestore.instance.collection(widget.id).add({
+                      await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                      .collection(widget.id).add({
                         'msg': message,
-                        'color': false,
+                        'color': isChattingWith == user!.email! ? true : false,
+                        'time': outputFormat.format(DateTime.now()),
+                        'sortTime': DateTime.now().toString(),
+                        'isImage': isImage,
+                        'photoname': photoname,
+                        'id': user!.email!,  
+                        'reply': reply.value,
+                        'replyName': replyName,
+                        'replyMsg': replyMsg,  
+                        'name': Globalname,                       
+                        'cat': 3,
+                        'cat1': category,
+                        'isSelected': false,
+                        'date': dateFormat.format(DateTime.now())                  
+                      }).then((value) =>(
+
+                       id = value.id
+
+                      )).catchError((error) => debugPrint("Failed to add user: $error"));  
+                     
+                      } catch(e){
+                          Fluttertoast.showToast(  
+                          msg: 'An error occured..!',  
+                          toastLength: Toast.LENGTH_LONG,  
+                          gravity: ToastGravity.BOTTOM,  
+                          backgroundColor: Colors.blueGrey,  
+                          textColor: Colors.white); 
+                      } 
+//................................................................................................................                        
+                    try{   
+                      await FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("chat").doc("Users")
+                      .collection(user!.email!).doc(id).set({
+                        'msg': message,
+                        'color': isChattingWith == user!.email! ? true : false,
                         'time': outputFormat.format(DateTime.now()),
                         'sortTime': DateTime.now().toString(),
                         'isImage': isImage,
@@ -1289,7 +1837,7 @@ ClearMessage() async{
                         'date': dateFormat.format(DateTime.now())                  
                       });  
                      
-                      } catch(e){
+                    } catch(e){
                           Fluttertoast.showToast(  
                           msg: 'An error occured..!',  
                           toastLength: Toast.LENGTH_LONG,  
@@ -1347,14 +1895,13 @@ ClearMessage() async{
         ),
       ),
 
-    );
+    ));
 
   }
 
 Showbottomsheet (context){
-        
+          _playAudio != true ?
           showCupertinoModalPopup<void>(
-              //barrierColor : Theme.of(context).scaffoldBackgroundColor,
               context: context,
               builder: (context) => Padding(padding: EdgeInsets.only(bottom: 70, left: 20, right: 20),
               child: Material(elevation: 20,
@@ -1402,17 +1949,7 @@ Showbottomsheet (context){
           icon: 
           //cat != 2 ? 
           Icon(CupertinoIcons.photo, color: Colors.white, size: 40,)
-          // : isImage == true ? 
-          // isloading == false ?         
-          // ClipRRect( 
-          //   child: Image.file(
-          //     _image,
-          //     width: 30,
-          //     height: 30,
-          //     fit: BoxFit.fill
-          //     ),)
-          // : CircularProgressIndicator(color: Colors.blueGrey,)
-          // : Icon(CupertinoIcons.photo, color: Colors.blueGrey,)
+
           ))),
 //.........................................................................................................
           SizedBox(width: 5,),
@@ -1444,13 +1981,7 @@ Showbottomsheet (context){
           icon: 
           //cat != 2 ? 
           Icon(CupertinoIcons.folder, color: Colors.white, size: 40,)
-          //  : isImage == false ? isloading == false ?  
-          // Material(
-          // color: Colors.white,elevation: 10,
-          // child: Text("pickfile!.name", textAlign: TextAlign.center,
-          // style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 10, color: Colors.blueGrey,fontWeight: FontWeight.bold)))
-          // : CircularProgressIndicator(color: Colors.blueGrey,)
-          // : Icon(CupertinoIcons.folder, color: Colors.blueGrey,)
+
           ),)),
               ],
           ),
@@ -1459,7 +1990,81 @@ Showbottomsheet (context){
 
           ],),
 
-        )),));  
+        )),))
+//...........................................................................................................
+      : showCupertinoModalPopup<void>(
+              context: context,
+              builder: (context) => Padding(padding: EdgeInsets.only(bottom: 100, left: 20, right: 20),
+              child: Material(elevation: 20,
+              shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(100.0),
+                ),
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: Container(
+                decoration: BoxDecoration(              
+                borderRadius: BorderRadius.circular(100.0),               
+                color: Theme.of(context).scaffoldBackgroundColor,
+                ),
+                height: 50,
+                width: 210,
+                child: 
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+//.........................................................................................................
+
+          IconButton(onPressed: () async {
+            
+            stopRecording();
+
+            Navigator.pop(context);
+          }, 
+          icon: 
+          Icon(CupertinoIcons.stop_circle, color: Theme.of(context).hintColor, size: 30,)
+
+          ),
+//.........................................................................................................
+          SizedBox(width: 1,),
+
+
+          IconButton(onPressed: () async {
+                     
+            Navigator.pop(context);
+          }, 
+          icon: 
+          //cat != 2 ? 
+          Icon(CupertinoIcons.play_circle, color: Theme.of(context).hintColor, size: 30,)
+
+          ),
+
+          SizedBox(width: 10,),
+          StreamBuilder<RecordingDisposition>(
+          stream: _recordingSession.onProgress,
+          builder: (context, snapshot){
+            String formatDuration(Duration duration) {
+              String hours = duration.inHours.toString().padLeft(0, '2');
+              String minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+              String seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+              return "$hours:$minutes:$seconds";
+            } 
+            final duration = snapshot.hasData 
+            ? snapshot.data!.duration
+            :Duration.zero;
+            return Text('${formatDuration(duration)}',
+            style: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,));
+          }
+        ),
+          //Text(_timerText, style: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,)),
+              ],
+          ),
+
+          // SizedBox(height: 10,),
+
+          // ],),
+
+        )),));
+
   }   
 //.........................................................................................................
 
@@ -1576,11 +2181,60 @@ Showbottomsheet (context){
   }
 
 onSendMessage(String sticker) async {
+  String id = "";
+  String isChattingWith = "";
+
+                try{
+              await collectionReference.collection("Users").doc(widget.id).get()
+                .then((snapshot) {
+                setState(() {
+                isChattingWith = snapshot.get('isChattingWith');                
+              });
+              });
+              } catch (e){
+                debugPrint("error");
+              }
+
                    try{ 
 
-                      await FirebaseFirestore.instance.collection(widget.id).add({
+                      await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                      .collection(widget.id).add({
                         'sticker': sticker,
-                        'color': false,
+                        'color': isChattingWith == user!.email! ? true : false,
+                        'time': outputFormat.format(DateTime.now()),
+                        'sortTime': DateTime.now().toString(),
+                        'isImage': isImage,
+                        'id': user!.email!,   
+                        'reply': reply.value,
+                        'replyName': replyName,
+                        'replyMsg': replyMsg,  
+                        'name': Globalname,                       
+                        'cat': 1,
+                        'photoname': photoname,
+                        'cat1': category,
+                        'isSelected': false,
+                        'date': dateFormat.format(DateTime.now())                  
+                      }).then((value) =>(
+
+                       id = value.id
+
+                      )).catchError((error) => debugPrint("Failed to add user: $error"));  
+                     
+                      } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Colors.blueGrey,  
+                                    textColor: Colors.white); 
+                                    }    
+//................................................................................................................
+                   try{ 
+
+                      await FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("chat").doc("Users")
+                      .collection(user!.email!).doc(id).set({
+                        'sticker': sticker,
+                        'color': isChattingWith == user!.email! ? true : false,
                         'time': outputFormat.format(DateTime.now()),
                         'sortTime': DateTime.now().toString(),
                         'isImage': isImage,
@@ -1603,7 +2257,7 @@ onSendMessage(String sticker) async {
                                     gravity: ToastGravity.BOTTOM,  
                                     backgroundColor: Colors.blueGrey,  
                                     textColor: Colors.white); 
-                                    }    
+                                    }                                      
                 setState(() {
                         reply = ValueNotifier<bool>(false);
                         replyMsg = "";
@@ -1704,7 +2358,7 @@ class photoViewState extends State<photoView>{
         title:  Text(
           widget.date,
           style: TextStyle(
-            color: Colors.white,fontFamily: 'BrandonBIBI',
+            color: Colors.white,fontFamily: 'BrandonBI',
             fontSize: 18,
           ),
         ),
@@ -1799,7 +2453,7 @@ class PhotoView2State extends State<PhotoView2>{
         title:  Text(
           widget.date,
           style: TextStyle(
-            color: Colors.white,fontFamily: 'BrandonBIBI',
+            color: Colors.white,fontFamily: 'BrandonBI',
             fontSize: 18,
           ),
         ),

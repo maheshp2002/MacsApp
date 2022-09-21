@@ -41,7 +41,8 @@ class RequestsState extends State<Requests>{
         centerTitle: true,
   ), 
   body: StreamBuilder(
-      stream: FirebaseFirestore.instance.collection(user!.email! + "request")
+      stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!)
+      .collection(user!.email! + "request")
           .snapshots(),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
          if (!snapshot.hasData) {   
@@ -98,23 +99,26 @@ class RequestsState extends State<Requests>{
                       onPressed: () async{
                       
                       try{
-                      await FirebaseFirestore.instance.collection(snapshot.data.docs[index]['Requestemail'] + "friends").doc(user!.email!).set({
+                      await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
+                      .doc(snapshot.data.docs[index]['Requestemail']).set({
                         'name': widget.name,
                         'about': widget.about,
                         'img': widget.img,
                         'email': user!.email!,
-                        'id': user!.email! + snapshot.data.docs[index]['Requestemail']
+                        'id': snapshot.data.docs[index]['Requestemail']
                       });
 
-                      await FirebaseFirestore.instance.collection(user!.email! + "friends").doc(snapshot.data.docs[index]['Requestemail']).set({
+                      await FirebaseFirestore.instance.collection("Users").doc(snapshot.data.docs[index]['Requestemail']).collection("friends")
+                      .doc(user!.email!).set({
                         'name': snapshot.data.docs[index]['Requestname'],
                         'about': snapshot.data.docs[index]['Requestabout'],
                         'img': snapshot.data.docs[index]['Requestimg'],
                         'email': snapshot.data.docs[index]['Requestemail'],   
-                        'id': user!.email! + snapshot.data.docs[index]['Requestemail']                     
+                        'id': user!.email!                   
                       });  
 
-                      FirebaseFirestore.instance.collection(user!.email! + "request")
+                      FirebaseFirestore.instance.collection("Users").doc(user!.email!)
+                      .collection(user!.email! + "request")
                       .doc(snapshot.data.docs[index]['Requestemail']).delete();
                       } catch(e){
                                     Fluttertoast.showToast(  
@@ -145,7 +149,8 @@ class RequestsState extends State<Requests>{
                       onPressed: () async{
                       
                       try{
-                      FirebaseFirestore.instance.collection(user!.email! + "request")
+                      FirebaseFirestore.instance.collection("Users").doc(user!.email!)
+                      .collection(user!.email! + "request")
                       .doc(snapshot.data.docs[index]['Requestemail']).delete();
                       } catch(e){
                                     Fluttertoast.showToast(  
