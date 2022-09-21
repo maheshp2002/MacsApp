@@ -224,7 +224,7 @@ if (isOnline == true){
         title:  Text(
           "MacsApp",
           style: TextStyle(
-            color: Colors.white60,fontFamily: 'BrandonBIBI',
+            color: Colors.white60,fontFamily: 'BrandonBI',
             fontSize: 18,
           ),
         ),
@@ -648,7 +648,7 @@ class UsersListState extends State<UsersList>{
         title:  Text(
           "Friends",
           style: TextStyle(
-            color: Colors.grey,fontFamily: 'BrandonBIBI',
+            color: Colors.grey,fontFamily: 'BrandonBI',
             fontSize: 18,
           ),
         ),

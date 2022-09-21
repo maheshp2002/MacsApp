@@ -48,6 +48,7 @@ class chatState extends State<chat> {
   var dateFormat = DateFormat(' yyyy-MM-dd - hh:mm a');
   PlatformFile? pickfile;
   bool isBottomSheet = false;
+  bool isPause = false;
   
   //recording audio
   late FlutterSoundRecorder _recordingSession;
@@ -70,7 +71,7 @@ class chatState extends State<chat> {
   bool color = true;
   bool isShowSticker = false;
   bool _show = false;
-  
+  // double progress = 0;
   
 
 //.................................................................................................................
@@ -287,8 +288,19 @@ class chatState extends State<chat> {
 Future<String> uploadFile(_image) async {
 
               FirebaseStorage storage = FirebaseStorage.instance;
-              Reference ref = storage.ref().child(user!.email! + "- chat -" + DateTime.now().toString());
+              Reference ref = storage.ref().child(user!.email! + "/" + "chat" + "/" + user!.email! + "- chat -" + DateTime.now().toString());
               await ref.putFile(File(_image.path));
+            //   task.snapshotEvents.listen((TaskSnapshot event) {
+            //     setState(() {
+                  
+                
+            //   progress =
+            //       ((event.bytesTransferred.toDouble() / event.totalBytes.toDouble()) *
+            //           100).roundToDouble();
+            //   print('progress $progress');
+            //   print("##############################################");
+            // });
+            //});
               String returnURL = await ref.getDownloadURL();
               return returnURL;
             }
@@ -1282,24 +1294,32 @@ return Future.value(false);
                         icon: Icon(snapshot.data.docs[index]["isPlaying"]== true ? Icons.stop : Icons.play_arrow, color: Theme.of(context).hintColor, size: 30,)),
 
                         snapshot.data.docs[index]["isPlaying"] == true ? IconButton(onPressed: () {
-                          if (snapshot.data.docs[index]["isPause"] == false){
-                            FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
-                            .collection(Globalid).doc(snapshot.data.docs[index].id).update({
-                              'isPause': true
-                            });
+                          //if (snapshot.data.docs[index]["isPause"] == false){
+                           if (isPause == false){
+                            // FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                            // .collection(Globalid).doc(snapshot.data.docs[index].id).update({
+                            //   'isPause': true
+                            // });
+                          setState(() {
+                            isPause == true;
+                          });
 
                             assetsAudioPlayer.pause();
                           } else {
 
-                            FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
-                            .collection(Globalid).doc(snapshot.data.docs[index].id).update({
-                              'isPause': false
-                            });
+                            // FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+                            // .collection(Globalid).doc(snapshot.data.docs[index].id).update({
+                            //   'isPause': false
+                            // });
+                         setState(() {
+                            isPause == false;
+                          });
+
 
                             assetsAudioPlayer.play();
                           }
                         }, 
-                        icon: Icon(snapshot.data.docs[index]["isPause"] == true ? Icons.play_circle_outline : Icons.pause_circle_outline, color: Theme.of(context).hintColor, size: 30,))
+                        icon: Icon(isPause == true ? Icons.play_circle_outline : Icons.pause_circle_outline, color: Theme.of(context).hintColor, size: 30,))
                         : Text(""),
                                                 
                         Flexible( 
@@ -1328,6 +1348,8 @@ return Future.value(false);
                           }
                         }, child: Text(playbackSpeed.toString() + "x", style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 10,fontFamily: 'BrandonL',),)
                         ))),
+                        
+                        snapshot.data.docs[index]["isPlaying"] != true ? SizedBox(width: 20) : Text(""),
 
                         snapshot.data.docs[index]["isPlaying"] != true ?
                         Flexible(child: 
@@ -1336,11 +1358,11 @@ return Future.value(false);
                         : Text(""),
 
                         snapshot.data.docs[index]["isPlaying"] == true ?
-                        Column(mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
+
                         //Flexible(child: 
-                        SizedBox(width: 150,
-                        child:
+                        SizedBox(width: 150, height: 80,
+                        child: Column(mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
                         assetsAudioPlayer.builderRealtimePlayingInfos(
                             builder: (context, RealtimePlayingInfos? infos) {
                           if (infos == null) {
@@ -1359,8 +1381,10 @@ return Future.value(false);
                           await assetsAudioPlayer.seek(position);
                         },
                       );
-                      })
-                      ),//),
+                      }),
+                      //),
+                      Row(mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
                       StreamBuilder(
                         stream: assetsAudioPlayer.currentPosition,
                         builder: (context, AsyncSnapshot<Duration> asyncSnapshot) {
@@ -1368,8 +1392,15 @@ return Future.value(false);
 
                             return Text(formatDuration(duration), style: TextStyle(color: Theme.of(context).hintColor,fontSize: 10,fontFamily: 'BrandonL'),);  
                         }),
-                         ])
+
+                        SizedBox(width: 20,)
+
+                        ])
+
+                        ]))
+
                       : Text("")
+                         
                       ],)),
                         
                         
@@ -1707,7 +1738,7 @@ return Future.value(false);
               ),)
           : Text(pickfile!.name, textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 10, color: Colors.blueGrey,fontWeight: FontWeight.bold))
-          : CircularProgressIndicator(color: Theme.of(context).hintColor,)
+          : CircularProgressIndicator(color: Theme.of(context).hintColor, /*value: progress,*/)
           ),
           
           SizedBox(width: 1,),
@@ -2417,29 +2448,57 @@ class PhotoView2 extends StatefulWidget {
 
 class PhotoView2State extends State<PhotoView2>{
 
-  double? progress = null;
+  double progress = 0;
+  String percentage = "";
 
   @override
   Widget build(BuildContext context) {
   return Scaffold(
   appBar: AppBar(
         actions: [
-          progress != null ? Container(width:80,padding: EdgeInsets.only(right: 20, left: 10),
-          child: Center(child:
-          CircularProgressIndicator(value: progress,color: Colors.blueGrey,
-          backgroundColor: Color.fromARGB(202, 96, 125, 139),)))
+          progress != 0 ? 
+          Container(padding: EdgeInsets.only(right: 20, left: 10),width: 100,
+          child: Stack(
+          children: <Widget>[
+          Center(child:
+          CircularProgressIndicator(value: progress , color: Color.fromARGB(255, 0, 255, 8),
+          backgroundColor: Color.fromARGB(61, 0, 255, 8),)),
+          
+          Center(child: Text(percentage, textAlign: TextAlign.end,
+          style: TextStyle(
+            color: Color.fromARGB(213, 0, 255, 8),
+            fontFamily: 'BrandonL',
+            fontSize: 10,
+          ),)),
+          
+          ]),)
 
           : IconButton(
             icon:  Icon(
               Icons.download,
               color: Colors.white, // Change Custom Drawer Icon Color
             ),
-            onPressed: () {
+            onPressed: () async{
                 Permission.storage.request();
                 Permission.accessMediaLocation;
                 Permission.manageExternalStorage;
-                downloadFile(widget.url, widget.name);             
-          },),          
+
+                Directory tempDir = await getApplicationDocumentsDirectory();
+                String path = '/storage/emulated/0/Download/${widget.name}';
+
+                await Dio().download(widget.url, path,
+                onReceiveProgress: (received, total){
+                  double progress1 = received/ total * 100;
+
+                  setState(() {
+                    progress = progress1 / 100;
+                    percentage = '${progress1.floor()}%';
+                  });
+                });
+
+            // print(path);
+              OpenFile.open(path, type: "*/*");
+          },), 
         ],
         backgroundColor: Colors.black,    
         leading: IconButton(
@@ -2480,38 +2539,7 @@ class PhotoView2State extends State<PhotoView2>{
   ); 
       
   }
-    Future downloadFile(String url, String name) async {
 
-       Directory tempDir = await getApplicationDocumentsDirectory();
-       String path = '/storage/emulated/0/Download/${name}';
-
-
-
-
-      await Dio().download(url, path,
-      onReceiveProgress: (received, total){
-        double progress1 = received/ total;
-        //print(path);
-        //print(url);
-        setState(() {
-          //progress = progress1;
-        });
-      });
-
-   // print(path);
-    OpenFile.open(path, type: "*/*");
-    // } catch(e) {
-    //   try{
-    //   OpenFile.open(path, type: "video/mp4");
-    //   } catch(e) {
-    //     try{
-    //     OpenFile.open(path, type: "application/pdf");
-    //     } catch(e) {
-    //       OpenFile.open(path, type: "*/*");
-    //     }
-    //   }
-    // }
-
-  }
+ 
 
 }

@@ -66,7 +66,7 @@ class _UserdetailsState extends State<Userdetails> {
 Future<String> uploadFile(_image) async {
 
               FirebaseStorage storage = FirebaseStorage.instance;
-              Reference ref = storage.ref().child(user!.email! + "- profile -" + DateTime.now().toString());
+              Reference ref = storage.ref().child(user!.email! + "/" + "profile" + "/" + user!.email! + "- profile -" + DateTime.now().toString());
               await ref.putFile(File(_image.path));
               String returnURL = await ref.getDownloadURL();
               return returnURL;
