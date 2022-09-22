@@ -64,8 +64,9 @@ dependencies:
   permission_handler: ^10.0.0
   open_file: ^3.2.1
   url_launcher: ^6.1.5
-  flutter_sound: ^8.1.9
+  #flutter_sound: ^8.1.9
   assets_audio_player: ^3.0.5  
+  flutter_sound_lite: ^8.5.0
 
 
 dev_dependencies:
