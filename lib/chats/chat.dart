@@ -243,7 +243,7 @@ class chatState extends State<chat> {
                           msg: 'error occured..!',  
                           toastLength: Toast.LENGTH_LONG,  
                           gravity: ToastGravity.BOTTOM,  
-                          backgroundColor: Colors.blueGrey,  
+                          backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                           textColor: Colors.white  
                           );                            
                         }   
@@ -352,7 +352,7 @@ Future<String> uploadFile(_image) async {
                                     msg: 'An error occured..!',  
                                     toastLength: Toast.LENGTH_LONG,  
                                     gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white); 
                                     }   
 //........................................................................................................
@@ -381,7 +381,7 @@ Future<String> uploadFile(_image) async {
                                     msg: 'An error occured..!',  
                                     toastLength: Toast.LENGTH_LONG,  
                                     gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white); 
                                     }                                       
                 setState(() {
@@ -442,7 +442,7 @@ Future<String> uploadFile(_image) async {
                                     msg: 'An error occured..!',  
                                     toastLength: Toast.LENGTH_LONG,  
                                     gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white); 
                                     }   
 //...............................................................................................................
@@ -474,7 +474,7 @@ Future<String> uploadFile(_image) async {
                                     msg: 'An error occured..!',  
                                     toastLength: Toast.LENGTH_LONG,  
                                     gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white); 
                                     }        
                                                                    
@@ -837,7 +837,7 @@ ClearMessage() async{
                           msg: 'error occured..!',  
                           toastLength: Toast.LENGTH_LONG,  
                           gravity: ToastGravity.BOTTOM,  
-                          backgroundColor: Colors.blueGrey,  
+                          backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                           textColor: Colors.white  
                           );                            
                         }   
@@ -1553,12 +1553,17 @@ return Future.value(false);
                 controller: messageController,
                 keyboardType: TextInputType.multiline,
                 maxLines: null,
-                style: const TextStyle(
+                style: TextStyle(
+                  color: Theme.of(context).hintColor,
                   fontSize: 16,
                   fontFamily: 'BrandonLI'
                 ),
-                textCapitalization: TextCapitalization.words,
+                textCapitalization: TextCapitalization.sentences,
                 decoration:  InputDecoration(
+                  hintStyle: TextStyle(
+                  color: Theme.of(context).hintColor,
+                  fontFamily: 'BrandonLI'
+                  ),
                   hintText: 'Type down your message',
                   prefixIcon: Icon(Icons.person),
                   border: UnderlineInputBorder(),
@@ -1753,12 +1758,17 @@ return Future.value(false);
                 controller: messageController,
                 keyboardType: TextInputType.multiline,
                 maxLines: null,
-                style: const TextStyle(
+                style: TextStyle(
+                  color: Theme.of(context).hintColor,
                   fontSize: 16,
                   fontFamily: 'BrandonLI'
                 ),
                 textCapitalization: TextCapitalization.words,
                 decoration:  InputDecoration(
+                  hintStyle: TextStyle(
+                  color: Theme.of(context).hintColor,
+                  fontFamily: 'BrandonLI'
+                  ),
                   hintText: _playAudio != true ? cat == 1? 'Type down your message' : 'Tap here cancel media select' : 'Tap here cancel recording' ,
                   border: UnderlineInputBorder(),
                 ),
@@ -1844,7 +1854,7 @@ return Future.value(false);
                           msg: 'An error occured..!',  
                           toastLength: Toast.LENGTH_LONG,  
                           gravity: ToastGravity.BOTTOM,  
-                          backgroundColor: Colors.blueGrey,  
+                          backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                           textColor: Colors.white); 
                       } 
 //................................................................................................................                        
@@ -1873,7 +1883,7 @@ return Future.value(false);
                           msg: 'An error occured..!',  
                           toastLength: Toast.LENGTH_LONG,  
                           gravity: ToastGravity.BOTTOM,  
-                          backgroundColor: Colors.blueGrey,  
+                          backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                           textColor: Colors.white); 
                       }   
 
@@ -2256,7 +2266,7 @@ onSendMessage(String sticker) async {
                                     msg: 'An error occured..!',  
                                     toastLength: Toast.LENGTH_LONG,  
                                     gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white); 
                                     }    
 //................................................................................................................
@@ -2286,7 +2296,7 @@ onSendMessage(String sticker) async {
                                     msg: 'An error occured..!',  
                                     toastLength: Toast.LENGTH_LONG,  
                                     gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white); 
                                     }                                      
                 setState(() {

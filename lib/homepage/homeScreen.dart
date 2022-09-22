@@ -4,7 +4,9 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firestore_search/firestore_search.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:macsapp/chats/chat.dart';
+import 'package:macsapp/chats/videoCall.dart';
 import 'package:macsapp/login/services/googlesignin.dart';
 import 'package:macsapp/main.dart';
 import 'package:macsapp/profile.dart';
@@ -420,7 +422,7 @@ if (isOnline == true){
                           msg: 'error occured..!',  
                           toastLength: Toast.LENGTH_LONG,  
                           gravity: ToastGravity.BOTTOM,  
-                          backgroundColor: Colors.blueGrey,  
+                          backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                           textColor: Colors.white  
                           );                            
                         }              
@@ -518,7 +520,28 @@ launchURL() async{
                     img: snapshot.data['img'],)));
               },
               );
-            }}),          
+            }}), 
+            StreamBuilder(
+              stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!).snapshots(),
+              builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+              if (!snapshot.hasData) {   
+                return ListTile(
+                  leading: Icon(FontAwesomeIcons.video, color: Theme.of(context).hintColor),
+                  title: Text('Video call', style: TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor)),
+                    
+                  onTap: () async{},
+                );
+            }
+            else{
+            return ListTile(
+            leading: Icon(FontAwesomeIcons.video, color: Theme.of(context).hintColor, size: 20),
+            title: Text('Video call', style: TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor)),
+            
+            onTap: () async{
+              
+               Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => VideoCall(username: snapshot.data['name'],)));},
+          );
+          }}),         
           ListTile(
             leading: Icon(Icons.border_color, color: Theme.of(context).hintColor),
             title: Text('About', style: TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor)),
@@ -668,7 +691,7 @@ class UsersListState extends State<UsersList>{
           ],));
         }
 
-        else{
+        else if (snapshot.hasData) {
            return ListView(
            children: [
           
@@ -734,14 +757,20 @@ class UsersListState extends State<UsersList>{
                                     msg: 'An error occured..!',  
                                     toastLength: Toast.LENGTH_LONG,  
                                     gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white  
                                 );      
                       }                                                                                      
                       }),
             ));
               })]);           
-        }
+        } else {
+            return Container(color: Theme.of(context).scaffoldBackgroundColor,
+            child: 
+            Center(
+              child:  Text('Nothing is here..!', style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor),),
+            ));
+          }
       })
     );
 
@@ -809,7 +838,7 @@ class _SearchFeedState extends State<SearchFeed> {
       searchBy: 'name',
       scaffoldBody: Container(color: Theme.of(context).scaffoldBackgroundColor,
         child: Center(
-        child: Text("Search for product..!", style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor),)),
+        child: Text("Search for friends..!", style: TextStyle(fontFamily: 'BrandonLI', color: Theme.of(context).hintColor),)),
       ),
 
       dataListFromSnapshot: DataModel(docid: '', email: '', img: '', about: '', name: '').dataListFromSnapshot,
@@ -885,7 +914,7 @@ class _SearchFeedState extends State<SearchFeed> {
                                     msg: 'An error occured..!',  
                                     toastLength: Toast.LENGTH_LONG,  
                                     gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white  
                                 );      
                       }                                                                                      

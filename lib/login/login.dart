@@ -58,11 +58,19 @@ class _GoogleSignInState extends State<GoogleSignIn> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text("Error"),
+            title: Text("Error", style: TextStyle(
+                color: Colors.white60,
+                fontFamily: 'BrandonBI',
+                fontSize: 20,
+              ),),
             content: Text(message),
             actions: [
               TextButton(
-                child: Text("Ok"),
+                child: Text("Ok", style: TextStyle(
+                color: Colors.white60,
+                fontFamily: 'BrandonLI',
+                fontSize: 18,
+              ),),
                 onPressed: () {
                   Navigator.of(context).pop();
                 },

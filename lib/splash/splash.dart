@@ -43,7 +43,7 @@ class Splash extends StatefulWidget {
                textAlign: TextAlign.center,
                overflow: TextOverflow.ellipsis,
                style: TextStyle(
-               fontFamily: "BrandonBIBI",
+               fontFamily: "BrandonBI",
                fontSize: 35,
                color: Colors.blueGrey,
              ),)

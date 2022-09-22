@@ -33,7 +33,7 @@ class RequestsState extends State<Requests>{
         title:  Text(
           "Friend Request",
           style: TextStyle(
-            color: Colors.white60,fontFamily: 'BrandonBIBI',
+            color: Colors.white60,fontFamily: 'BrandonBI',
             fontSize: 18,
           ),
         ),
@@ -125,7 +125,7 @@ class RequestsState extends State<Requests>{
                                     msg: 'An error occured..!',  
                                     toastLength: Toast.LENGTH_LONG,  
                                     gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white  
                                 );                        
                       }
@@ -157,7 +157,7 @@ class RequestsState extends State<Requests>{
                                     msg: 'An error occured..!',  
                                     toastLength: Toast.LENGTH_LONG,  
                                     gravity: ToastGravity.BOTTOM,  
-                                    backgroundColor: Colors.blueGrey,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white  
                                 );                        
                       }
