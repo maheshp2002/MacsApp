@@ -86,7 +86,7 @@ class chatState extends State<chat> {
 
 //initialize...........................................................................................................
   void initializer() async {
-    pathToAudio = '/sdcard/Download/temp${DateTime.now()}.wav';
+    pathToAudio = '/sdcard/Download/audio${DateTime.now()}.wav';
     _recordingSession = FlutterSoundRecorder();
     await _recordingSession.openAudioSession(
         focus: AudioFocus.requestFocusAndStopOthers,
@@ -1046,7 +1046,10 @@ return Future.value(false);
         builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name']))),
         child:  ClipRRect(
          borderRadius: BorderRadius.circular(100),child: 
-        Image.network(snapshot.data['img'], width: 40, height: 40, fit: BoxFit.fill,))
+         Image.network(snapshot.data['img'], width: 40, height: 40, fit: BoxFit.fill,
+         errorBuilder: (context, error, stackTrace) => Image.network("https://firebasestorage.googleapis.com/v0/b/macsapp-f2a0f.appspot.com/o/App%20file%2Fdefault%2Fdownload.png?alt=media&token=ae634acf-dc30-4228-a071-587d9007773e",
+         width: 40, height: 40, fit: BoxFit.fill,)
+        ))
         ),
         
         SizedBox(width: 10,),
@@ -1206,7 +1209,10 @@ return Future.value(false);
                                 Container(width: 150,alignment: Alignment.center,
                                 color: Colors.blue[50],
                                 child: 
-                                Image.network(snapshot.data.docs[index]["replyMsg"], width: 30, height: 30,))])
+                                Image.network(snapshot.data.docs[index]["replyMsg"], width: 30, height: 30,
+                                errorBuilder: (context, error, stackTrace) => Image.network("https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png",
+                                width: 30, height: 30,),
+                                ))])
 
                                 : Column(children: [  
                                 Container(width: 150,alignment: Alignment.center,
@@ -1258,22 +1264,32 @@ return Future.value(false);
                         builder: (context)=> PhotoView2(url: snapshot.data.docs[index]["photo"], date: snapshot.data.docs[index]["date"],
                         name: snapshot.data.docs[index]["photoname"], isImage: snapshot.data.docs[index]["isImage"],))),
                         child: snapshot.data.docs[index]["isImage"] == true ?
-                        Image.network(snapshot.data.docs[index]["photo"], width: 150, height: 150,)
+                        Image.network(snapshot.data.docs[index]["photo"], width: 150, height: 150,
+                        errorBuilder: (context, error, stackTrace) => 
+                        Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                        Icon(FontAwesomeIcons.ban, color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, size: 15),
+                        Text(" This message has been deleted.", style: TextStyle(fontStyle: FontStyle.italic ,color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, fontSize: 15,fontFamily: 'BrandonLI')),
+                        ])
+                        //Image.network("https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png",
+                        //width: 150, height: 150,)
+                        )
                         :  SizedBox(width: 200,
                         child:
                         Row(
                         children: [
-                        Icon(Icons.file_download, color: Theme.of(context).hintColor, size: 30,),
+                        Icon(Icons.file_download, color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, size: 30,),
                         SizedBox(width: 10),
                         Expanded(child:
-                        Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 10,fontFamily: 'BrandonLI'),))]))
+                        Text(snapshot.data.docs[index]["photoname"], style: TextStyle(color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, fontSize: 15,fontFamily: 'BrandonLI'),))]))
                         )
                         
                         : snapshot.data.docs[index]["cat"] == 3 ? 
                         InkWell(
                         onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["msg"]),
                         child:                          
-                        Text(snapshot.data.docs[index]["msg"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 15,fontFamily: 'BrandonBI'),))
+                        Text(snapshot.data.docs[index]["msg"], style: TextStyle(color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, fontSize: 15,fontFamily: 'BrandonBI'),))
 
                         : InkWell(
                         onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["audioname"]),
@@ -1291,7 +1307,7 @@ return Future.value(false);
                             playFuncNetwork(snapshot.data.docs[index]["photo"], snapshot.data.docs[index]["audioname"], snapshot.data.docs[index]["name"], snapshot.data.docs[index].id);
                           }
                         }, 
-                        icon: Icon(snapshot.data.docs[index]["isPlaying"]== true ? Icons.stop : Icons.play_arrow, color: Theme.of(context).hintColor, size: 30,)),
+                        icon: Icon(snapshot.data.docs[index]["isPlaying"]== true ? Icons.stop : Icons.play_arrow, color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, size: 30,)),
 
                         snapshot.data.docs[index]["isPlaying"] == true ? IconButton(onPressed: () {
                           //if (snapshot.data.docs[index]["isPause"] == false){
@@ -1319,14 +1335,14 @@ return Future.value(false);
                             assetsAudioPlayer.play();
                           }
                         }, 
-                        icon: Icon(isPause == true ? Icons.play_circle_outline : Icons.pause_circle_outline, color: Theme.of(context).hintColor, size: 30,))
+                        icon: Icon(isPause == true ? Icons.play_circle_outline : Icons.pause_circle_outline, color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, size: 30,))
                         : Text(""),
                                                 
                         Flexible( 
                         child: SizedBox(width: 55, height: 20,
                         child: ElevatedButton(
                         style:  ElevatedButton.styleFrom(
-                        primary: Theme.of(context).hintColor
+                        primary: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54
                         ),
                           onPressed: (){
                           if (playbackSpeed == 0.5){
@@ -1346,14 +1362,14 @@ return Future.value(false);
                               playbackSpeed = 0.5;
                             });
                           }
-                        }, child: Text(playbackSpeed.toString() + "x", style: TextStyle(color: Theme.of(context).scaffoldBackgroundColor, fontSize: 10,fontFamily: 'BrandonL',),)
+                        }, child: Text(playbackSpeed.toString() + "x", style: TextStyle(color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).scaffoldBackgroundColor : Colors.white, fontSize: 10,fontFamily: 'BrandonL',),)
                         ))),
                         
                         snapshot.data.docs[index]["isPlaying"] != true ? SizedBox(width: 20) : Text(""),
 
                         snapshot.data.docs[index]["isPlaying"] != true ?
                         Flexible(child: 
-                        Text(snapshot.data.docs[index]["audioname"], style: TextStyle(color: Theme.of(context).hintColor,fontSize: 15,fontFamily: 'BrandonBI'),))
+                        Text(snapshot.data.docs[index]["audioname"], style: TextStyle(color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, fontSize: 15,fontFamily: 'BrandonBI'),))
                         
                         : Text(""),
 
@@ -1370,9 +1386,9 @@ return Future.value(false);
                           }
 
                         return Slider(
-                        thumbColor: Theme.of(context).hintColor,
-                        activeColor: Theme.of(context).hintColor,
-                        inactiveColor: Theme.of(context).hintColor,
+                        thumbColor: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54,
+                        activeColor: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54,
+                        inactiveColor: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54,
                         min: 0,
                         max: infos.duration.inSeconds.toDouble(),
                         value: infos.currentPosition.inSeconds.toDouble(),
@@ -1390,7 +1406,7 @@ return Future.value(false);
                         builder: (context, AsyncSnapshot<Duration> asyncSnapshot) {
                             final Duration? duration = asyncSnapshot.data ?? Duration(hours: 00, minutes: 00, seconds: 00);
 
-                            return Text(formatDuration(duration), style: TextStyle(color: Theme.of(context).hintColor,fontSize: 10,fontFamily: 'BrandonL'),);  
+                            return Text(formatDuration(duration), style: TextStyle(color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54,fontSize: 10,fontFamily: 'BrandonL'),);  
                         }),
 
                         SizedBox(width: 20,)
@@ -1409,7 +1425,7 @@ return Future.value(false);
                         SizedBox(width: 80, child:
                         Row(mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                        Text(snapshot.data.docs[index]["time"], style: TextStyle(color: Theme.of(context).hintColor, fontSize: 10,fontFamily: 'BrandonLI'),),
+                        Text(snapshot.data.docs[index]["time"], style: TextStyle(color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, fontSize: 10,fontFamily: 'BrandonLI'),),
                         SizedBox(width: 5,),
                         Icon(Icons.check, color: snapshot.data.docs[index]["color"] == true ? Color.fromARGB(255, 1, 248, 9): Colors.grey[500], size: 15,)
                         ],),)//),
@@ -1656,7 +1672,10 @@ return Future.value(false);
                                 Container(width: 200,alignment: Alignment.center,
                                 color: Colors.blue[50],     
                                 child: isImage == true ?  
-                                Image.network(replyMsg, width: 30, height: 30,)
+                                Image.network(replyMsg, width: 30, height: 30,
+                                errorBuilder: (context, error, stackTrace) => Image.network("https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/No-Image-Placeholder.svg/1665px-No-Image-Placeholder.svg.png",
+                                width: 30, height: 30,)
+                                )
                                 : Text(photoname, style: TextStyle(color: Colors.blueGrey,fontSize: 10,fontFamily: 'BrandonBI')),
                                 )])
 
@@ -1763,7 +1782,7 @@ return Future.value(false);
                   fontSize: 16,
                   fontFamily: 'BrandonLI'
                 ),
-                textCapitalization: TextCapitalization.words,
+                textCapitalization: TextCapitalization.sentences,
                 decoration:  InputDecoration(
                   hintStyle: TextStyle(
                   color: Theme.of(context).hintColor,
@@ -2008,7 +2027,7 @@ Showbottomsheet (context){
               isShowSticker = false ;
             });
 
-            final result = await FilePicker.platform.pickFiles(allowMultiple: false);
+            final result = await FilePicker.platform.pickFiles(allowMultiple: true);
             if(result == null) return;
 
             setState(() {

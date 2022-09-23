@@ -7,6 +7,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:macsapp/chats/chat.dart';
 import 'package:macsapp/chats/videoCall.dart';
+import 'package:macsapp/homepage/deleteAccount.dart';
 import 'package:macsapp/login/services/googlesignin.dart';
 import 'package:macsapp/main.dart';
 import 'package:macsapp/profile.dart';
@@ -163,6 +164,7 @@ if (isOnline == true){
   floatingActionButton: StreamBuilder(
       stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!).snapshots(),
       builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+      
       if (!snapshot.hasData) {   
         return  FloatingActionButton(
         backgroundColor: Colors.blueGrey, onPressed: () {  },);
@@ -216,7 +218,7 @@ if (isOnline == true){
           builder: (BuildContext context) {
             return IconButton(
               icon:  Icon(
-                Icons.menu,
+                FontAwesomeIcons.bars,
                 color: Colors.white24, // Change Custom Drawer Icon Color
               ),
               onPressed: () {
@@ -342,7 +344,10 @@ if (isOnline == true){
 
                       ClipRRect(
                       borderRadius: BorderRadius.circular(100),child: 
-                      Image.network(snapshot.data['img'], width: 50, height: 50, fit: BoxFit.fill,))),
+                      Image.network(snapshot.data['img'], width: 50, height: 50, fit: BoxFit.fill,
+                      errorBuilder: (context, error, stackTrace) => Image.network("https://firebasestorage.googleapis.com/v0/b/macsapp-f2a0f.appspot.com/o/App%20file%2Fdefault%2Fdownload.png?alt=media&token=ae634acf-dc30-4228-a071-587d9007773e",
+                      width: 50, height: 50, fit: BoxFit.fill,)
+                      ))),
 
                       );
                   }}),
@@ -541,7 +546,30 @@ launchURL() async{
               
                Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => VideoCall(username: snapshot.data['name'],)));},
           );
-          }}),         
+          }}),
+          StreamBuilder(
+              stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!).snapshots(),
+              builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+              if (!snapshot.hasData) {   
+          return ListTile(
+            leading: Icon(Icons.delete_sweep, color: Theme.of(context).hintColor),
+            title: Text('Delete account', style: TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor)),
+            
+            onTap: () async{
+              
+               Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => deleteAccount(email: user!.email!,)));},
+          ); 
+          }
+          else{
+          return ListTile(
+            leading: Icon(Icons.delete_sweep, color: Theme.of(context).hintColor),
+            title: Text('Delete account', style: TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor)),
+            
+            onTap: () async{
+              
+               Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => deleteAccount(email: user!.email!, name: snapshot.data['name'],)));},
+          ); 
+          }}),        
           ListTile(
             leading: Icon(Icons.border_color, color: Theme.of(context).hintColor),
             title: Text('About', style: TextStyle(fontFamily: 'BrandonBI', color: Theme.of(context).hintColor)),
@@ -718,7 +746,10 @@ class UsersListState extends State<UsersList>{
                       leading: InkWell(
                       child: ClipRRect(
                       borderRadius: BorderRadius.circular(100),child: 
-                      Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50, fit: BoxFit.fill,),),
+                      Image.network(snapshot.data.docs[index]['img'], width: 50, height: 50, fit: BoxFit.fill,
+                      errorBuilder: (context, error, stackTrace) => Image.network("https://firebasestorage.googleapis.com/v0/b/macsapp-f2a0f.appspot.com/o/App%20file%2Fdefault%2Fdownload.png?alt=media&token=ae634acf-dc30-4228-a071-587d9007773e",
+                      width: 50, height: 50, fit: BoxFit.fill,)
+                      ),),
                       onTap: () {
                       Navigator.push(context, MaterialPageRoute(
                       builder: (context)=> photoView(url: snapshot.data.docs[index]['img'], date: snapshot.data.docs[index]['name'])));                        
@@ -875,6 +906,8 @@ class _SearchFeedState extends State<SearchFeed> {
                         width: 55,
                         height: 80,
                         fit: BoxFit.fill,
+                      errorBuilder: (context, error, stackTrace) => Image.network("https://firebasestorage.googleapis.com/v0/b/macsapp-f2a0f.appspot.com/o/App%20file%2Fdefault%2Fdownload.png?alt=media&token=ae634acf-dc30-4228-a071-587d9007773e",
+                      width: 55, height: 80, fit: BoxFit.fill,)
                       )),
                       onTap: () {
                       Navigator.push(context, MaterialPageRoute(

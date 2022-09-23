@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:macsapp/chats/chat.dart';
 import 'package:macsapp/homepage/homeScreen.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
@@ -129,6 +130,10 @@ SizedBox(height: 10,),
       Column(children: [  
               Center(child: 
               GestureDetector(
+              onLongPress: () {
+                Navigator.push(context, MaterialPageRoute(
+                builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name'],)));
+              },
               onTap: () {                
                 getImage(true);
               },
@@ -182,7 +187,7 @@ SizedBox(height: 10,),
                   fontSize: 16,
                   fontFamily: 'BrandonBI'
                 ),
-                textCapitalization: TextCapitalization.words,
+                textCapitalization: TextCapitalization.sentences,
                 decoration:  InputDecoration(
                   hintStyle: TextStyle(
                   color: Theme.of(context).hintColor,
@@ -207,7 +212,7 @@ SizedBox(height: 10,),
                   fontSize: 16,
                   fontFamily: 'BrandonBI'
                 ),
-                textCapitalization: TextCapitalization.words,
+                textCapitalization: TextCapitalization.sentences,
                 decoration:  InputDecoration(
                   hintStyle: TextStyle(
                   color: Theme.of(context).hintColor,

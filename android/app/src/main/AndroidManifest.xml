@@ -7,6 +7,19 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"/>
 
+    <queries>
+    <!-- If your app emails -->
+    <intent>
+        <action android:name="android.intent.action.SEND" />
+        <data android:mimeType="*/*" />
+    </intent>
+        <!-- If your app makes calls -->
+    <intent>
+        <action android:name="android.intent.action.DIAL" />
+        <data android:scheme="tel" />
+    </intent>
+    </queries>
+    
    <application
         tools:replace="android:label"
         android:label="MacsApp"

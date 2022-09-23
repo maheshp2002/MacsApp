@@ -221,7 +221,7 @@ SizedBox(height: 10,),
                   fontSize: 16,
                   fontFamily: 'BrandonLI'
                 ),
-                textCapitalization: TextCapitalization.words,
+                textCapitalization: TextCapitalization.sentences,
                 decoration:  InputDecoration(
                   hintText: 'Name',
                   prefixIcon: Icon(Icons.person),
@@ -239,7 +239,7 @@ SizedBox(height: 10,),
                   fontSize: 16,
                   fontFamily: 'BrandonLI'
                 ),
-                textCapitalization: TextCapitalization.words,
+                textCapitalization: TextCapitalization.sentences,
                 decoration:  InputDecoration(
                   hintText: 'About',
                   prefixIcon: Icon(Icons.border_color),
@@ -255,7 +255,18 @@ SizedBox(height: 10,),
               onPressed: () async{
               String imgUrl = "";
 
-              if (unameController.text.trim().isEmpty)
+              if (unameController.text.trim().isEmpty && aboutController.text.trim().isEmpty){
+
+                  Fluttertoast.showToast(  
+                  msg: 'Please make sure all fields are filled ..!',  
+                  toastLength: Toast.LENGTH_LONG,  
+                  gravity: ToastGravity.BOTTOM,  
+                  backgroundColor: Color.fromARGB(255, 248, 17, 0),  
+                  textColor: Colors.white); 
+
+                }
+
+              else if (unameController.text.trim().isEmpty)
               { 
                 Fluttertoast.showToast(  
                 msg: 'Please enter a name..!',  
