@@ -288,8 +288,8 @@ if (isOnline == true){
 
                         Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => 
                         chat(id: snapshot.data.docs[index]['id'], online: isOnline,)));
-                       print("###############################################################################");
-                       print(snapshot.data.docs[index]['id']);
+                       //print("###############################################################################");
+                       //print(snapshot.data.docs[index]['id']);
                       },                       
                     child: StreamBuilder(
                     stream: FirebaseFirestore.instance.collection("Users").doc(snapshot.data.docs[index]['email'])

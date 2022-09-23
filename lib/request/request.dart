@@ -101,20 +101,20 @@ class RequestsState extends State<Requests>{
                       try{
                       await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
                       .doc(snapshot.data.docs[index]['Requestemail']).set({
-                        'name': widget.name,
-                        'about': widget.about,
-                        'img': widget.img,
-                        'email': user!.email!,
-                        'id': snapshot.data.docs[index]['Requestemail']
+                        'name': snapshot.data.docs[index]['Requestname'],
+                        'about': snapshot.data.docs[index]['Requestabout'],
+                        'img': snapshot.data.docs[index]['Requestimg'],
+                        'email': snapshot.data.docs[index]['Requestemail'],
+                        'id': snapshot.data.docs[index]['Requestemail'],
                       });
 
                       await FirebaseFirestore.instance.collection("Users").doc(snapshot.data.docs[index]['Requestemail']).collection("friends")
                       .doc(user!.email!).set({
-                        'name': snapshot.data.docs[index]['Requestname'],
-                        'about': snapshot.data.docs[index]['Requestabout'],
-                        'img': snapshot.data.docs[index]['Requestimg'],
-                        'email': snapshot.data.docs[index]['Requestemail'],   
-                        'id': user!.email!                   
+                        'name': widget.name,
+                        'about': widget.about,
+                        'img': widget.img,
+                        'email': user!.email!,   
+                        'id': user!.email!,                 
                       });  
 
                       FirebaseFirestore.instance.collection("Users").doc(user!.email!)
