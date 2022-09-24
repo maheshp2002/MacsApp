@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/rendering.dart';
@@ -47,17 +48,19 @@ class chatState extends State<chat> {
   var outputFormat = DateFormat('hh:mm a');
   var dateFormat = DateFormat(' yyyy-MM-dd - hh:mm a');
   PlatformFile? pickfile;
+  UploadTask? task;
   bool isBottomSheet = false;
   bool isPause = false;
+  bool uploadCanceled = false;
   
   //recording audio
   late FlutterSoundRecorder _recordingSession;
   //create a new player
   final assetsAudioPlayer = AssetsAudioPlayer();
-
-  late String pathToAudio;
+  //late String pathToAudio;
+  bool isRecPause = false;
   bool _playAudio = false;
-  String _timerText = '00:00:00';
+  //String _timerText = '00:00:00';
   double playbackSpeed = 1;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
@@ -71,7 +74,6 @@ class chatState extends State<chat> {
   bool color = true;
   bool isShowSticker = false;
   bool _show = false;
-  // double progress = 0;
   
 
 //.................................................................................................................
@@ -86,7 +88,7 @@ class chatState extends State<chat> {
 
 //initialize...........................................................................................................
   void initializer() async {
-    pathToAudio = '/sdcard/Download/audio${DateTime.now()}.wav';
+    //pathToAudio = '/sdcard/Download/audio${DateTime.now()}.wav';
     _recordingSession = FlutterSoundRecorder();
     await _recordingSession.openAudioSession(
         focus: AudioFocus.requestFocusAndStopOthers,
@@ -99,47 +101,105 @@ class chatState extends State<chat> {
     await Permission.microphone.request();
     await Permission.storage.request();
     await Permission.manageExternalStorage.request();
+    directoryPath = await _directoryPath();
+    completePath = await _completePath(directoryPath);
+    _createDirectory();
+    _createFile();
   }
 
+
+  String completePath = "";
+  String directoryPath = "";
+
+  Future<String> _completePath(String directory) async {
+    var fileName = _fileName();
+   // print("#####################################################$directory$fileName");
+    return "$directory$fileName";
+  }
+
+  Future<String> _directoryPath() async {
+    var directory = await getExternalStorageDirectory();
+    var directoryPath = directory!.path;
+    return "$directoryPath/MacsApp/records/";
+  }
+
+  String _fileName() {
+    return "audio${DateTime.now()}.wav";
+  }
+
+
+  Future _createFile() async {
+    File(completePath)
+        .create(recursive: true)
+        .then((File file) async {
+      //write to file
+      Uint8List bytes = await file.readAsBytes();
+      file.writeAsBytes(bytes);
+      print("FILE CREATED AT : "+file.path);
+    });
+  }
+
+  void _createDirectory() async {
+    bool isDirectoryCreated = await Directory(directoryPath).exists();
+    if (!isDirectoryCreated) {
+      Directory(directoryPath).create()
+          .then((Directory directory) {
+        print("DIRECTORY CREATED AT : " +directory.path);
+      });
+    }
+
+    bool isDownloadreated = await Directory('/sdcard/MacsApp/').exists();
+    if (!isDownloadreated) {
+      Directory('/sdcard/MacsApp/').create()
+          .then((Directory directory) {
+            // print("############################################## directory created");
+      });
+    }
+  
+  }
 //start record...........................................................................................................
+ 
   Future<void> startRecording() async {
 
     setState(() {
       _playAudio = true;
     });
 
-    Directory directory = Directory(path.dirname(pathToAudio));
+    Directory directory = Directory(path.dirname(completePath));
     if (!directory.existsSync()) {
       directory.createSync();
     }
     _recordingSession.openAudioSession();
     await _recordingSession.startRecorder(
-      toFile: pathToAudio,
+      toFile: completePath,
       codec: Codec.pcm16WAV,
     );
-    StreamSubscription _recorderSubscription =
-      _recordingSession.onProgress!.listen((e) {
-      var date = DateTime.fromMillisecondsSinceEpoch(
-      e.duration.inMilliseconds,
-          isUtc: true);
-      var timeText = DateFormat('mm:ss:SS', 'en_GB').format(date);
-      setState(() {
-        _timerText = timeText.substring(0, 8);
-      });
-    });
-    _recorderSubscription.cancel();
 
-    Showbottomsheet(context);
+    // StreamSubscription _recorderSubscription =
+    //   _recordingSession.onProgress!.listen((e) {
+    //   var date = DateTime.fromMillisecondsSinceEpoch(
+    //   e.duration.inMilliseconds,
+    //       isUtc: true);
+    //   var timeText = DateFormat('mm:ss:SS', 'en_GB').format(date);
+    //   setState(() {
+    //     _timerText = timeText.substring(0, 8);
+    //   });
+    // });
+    //_recorderSubscription.cancel();
+
+    ShowbottomsheetRec(context, _recordingSession.onProgress);
   }
 
-
+ 
 //stop record...........................................................................................................
+ 
   Future<String?> stopRecording() async {
     _recordingSession.closeAudioSession();
     setState(() {
       _playAudio = false;
+      isAudioLoading = true;
     });
-    File file = File(pathToAudio);
+    File file = File(completePath);
 
     String fileName = file.path.split('/').last;
 
@@ -158,6 +218,7 @@ class chatState extends State<chat> {
 //   }
 
 //Play audio network...........................................................................................................
+ 
   Future<void> playFuncNetwork(String url, artist, title, id) async {
 
 
@@ -195,6 +256,7 @@ class chatState extends State<chat> {
   }
 
 //stop play...........................................................................................................
+ 
   Future<void> stopPlayFunc(String id) async {
     FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
     .collection(Globalid).doc(id).update({
@@ -212,6 +274,7 @@ class chatState extends State<chat> {
 //   }
 
 //chat view.........................................................................................................
+   
     chatView() async{
                         try{
                         await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
@@ -267,6 +330,7 @@ class chatState extends State<chat> {
     scrollController.removeListener(() {});
     super.dispose();
   }
+
 //Scroll Controller..........................................................................................
   
   void handleScroll() async {
@@ -285,24 +349,26 @@ class chatState extends State<chat> {
 
 
 //..........................................................................................
+
 Future<String> uploadFile(_image) async {
 
               FirebaseStorage storage = FirebaseStorage.instance;
               Reference ref = storage.ref().child(user!.email! + "/" + "chat" + "/" + user!.email! + "- chat -" + DateTime.now().toString());
-              await ref.putFile(File(_image.path));
-            //   task.snapshotEvents.listen((TaskSnapshot event) {
-            //     setState(() {
-                  
-                
-            //   progress =
-            //       ((event.bytesTransferred.toDouble() / event.totalBytes.toDouble()) *
-            //           100).roundToDouble();
-            //   print('progress $progress');
-            //   print("##############################################");
-            // });
-            //});
-              String returnURL = await ref.getDownloadURL();
+              task = ref.putFile(File(_image.path));
+              
+              setState(() {});
+
+              String returnURL;
+
+              if (task == null) {print("null");};
+
+              if (uploadCanceled == true){ task!.cancel();}
+
+              final snapshot = await task!.whenComplete(() => {});
+              returnURL = await snapshot.ref.getDownloadURL();
+              
               return returnURL;
+
             }
 
 //..........................................................................................
@@ -310,6 +376,7 @@ Future<String> uploadFile(_image) async {
   Future<void> saveImages(File _image) async {
     String id = "";
     String isChattingWith = "";
+
               //_image.forEach((image) async {
               String imageURL = await uploadFile(_image);
               try{
@@ -375,7 +442,6 @@ Future<String> uploadFile(_image) async {
                         'isSelected': false,   
                         'date': dateFormat.format(DateTime.now())    
                       });  
-                     
                       } catch(e){
                                     Fluttertoast.showToast(  
                                     msg: 'An error occured..!',  
@@ -383,11 +449,46 @@ Future<String> uploadFile(_image) async {
                                     gravity: ToastGravity.BOTTOM,  
                                     backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white); 
-                                    }                                       
+                                    }  
+//for home page.............................................................................                                         
+                try {
+                 FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
+                 .doc(widget.id).update({
+                  'msg': photoname
+                 });
+                } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
+                                    textColor: Colors.white);                   
+                }
+//...............................................................................................................
+
+                try {
+                 FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("friends")
+                 .doc(user!.email!).update({
+                  'msg': photoname
+                 });
+                } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
+                                    textColor: Colors.white);                   
+                }
+
+//...............................................................................................................                                                       
+
+
+                                     
                 setState(() {
                   cat = 1;
                   isImage = true;
                   reply = ValueNotifier<bool>(false);
+                  multiPick = false;
                 }); 
                     
 }
@@ -477,11 +578,45 @@ Future<String> uploadFile(_image) async {
                                     backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white); 
                                     }        
+//for home page.............................................................................                                         
+                try {
+                 FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
+                 .doc(widget.id).update({
+                  'msg': fileName
+                 });
+                } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
+                                    textColor: Colors.white);                   
+                }
+//...............................................................................................................
+
+                try {
+                 FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("friends")
+                 .doc(user!.email!).update({
+                  'msg': fileName
+                 });
+                } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
+                                    textColor: Colors.white);                   
+                }
+
+//...............................................................................................................
+
                                                                    
                 setState(() {
                   cat = 1;
                   isImage = true;
                   reply = ValueNotifier<bool>(false);
+                  isAudioLoading = false;
+
                 }); 
                     
 }
@@ -489,7 +624,11 @@ Future<String> uploadFile(_image) async {
 
 // Image Picker
   File _image = File(''); // Used only if you need a single picture
+  bool multiPick = false; 
+  //late Map<String, String> _paths;
+  Map<String, String>? _paths;
   bool isloading = false;
+  bool isAudioLoading = false;
 
 //........................................................................................
 
@@ -512,7 +651,7 @@ Future<String> uploadFile(_image) async {
         //_images.add(File(pickedFile.path));
         _image= File(pickedFile.path); // Use if you only need a single picture
         photoname = (pickedFile.path.split('/').last);
-
+        multiPick = false;
       } else {
         debugPrint('No image selected.');
       }
@@ -524,6 +663,38 @@ Future<String> uploadFile(_image) async {
   @override
   Widget build(BuildContext context) {
 
+//upload widget...........................................................................................................
+
+Widget buildUploadStatus(UploadTask? task) => StreamBuilder<TaskSnapshot>(
+  stream: task!.snapshotEvents,
+  builder: (context, snapshot){
+
+  if (snapshot.hasData){
+    final snap = snapshot.data!;
+    final progress = snap.bytesTransferred / snap.totalBytes;
+    final percentage = (progress * 100).toStringAsFixed(0);
+    
+    return Stack(
+          children: <Widget>[
+          Center(child:
+          CircularProgressIndicator(value: progress , color: Color.fromARGB(255, 0, 255, 8),
+          backgroundColor: Color.fromARGB(61, 0, 255, 8),)),
+          
+          Center(child: Text(percentage + "%", textAlign: TextAlign.end,
+          style: TextStyle(
+            color: Color.fromARGB(213, 0, 255, 8),
+            fontFamily: 'BrandonL',
+            fontSize: 10,
+          ),)),
+          
+          ]);
+
+  } else {
+    return Container();
+  }
+
+  }
+  );
 //format duration..................................................................................................
   String formatDuration(Duration? duration) {
   String hours = duration!.inHours.toString().padLeft(0, '2');
@@ -672,7 +843,6 @@ selectedItem() async{
                 } 
               growableList.clear();
               Navigator.of(context).pop();  
-            // print("###################################################");  
             // print(widget.id);                
 //..............................................................................................            
 
@@ -722,7 +892,6 @@ selectedItem() async{
 
                   }
                   } catch (e){
-                  //print("###################################################");
                   debugPrint("error in image");
                 } 
 
@@ -742,7 +911,6 @@ selectedItem() async{
                   await FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
                   .collection(widget.id).doc(growableList[i]).delete();
                   } catch(e){
-                  //print("###################################################");
                     debugPrint("error in deliting other side mssg");
                   }
 
@@ -750,18 +918,50 @@ selectedItem() async{
                   await FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("chat").doc("Users")
                   .collection(user!.email!).doc(growableList[i]).delete();
                   } catch(e){
-                  print("###################################################");
                     debugPrint("error in deliting our side mssg");
                   }
                 }
 
               } catch (e){
-               print("###################################################");
                 debugPrint("error in deliting mssg no id ");
              } 
 
 
               }
+
+//for home page.............................................................................                                         
+                try {
+                 FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
+                 .doc(widget.id).update({
+                  'msg': "This message has been deleted..!"
+                 });
+                } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
+                                    textColor: Colors.white);                   
+                }
+//...............................................................................................................
+
+                try {
+                 FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("friends")
+                 .doc(user!.email!).update({
+                  'msg': "This message has been deleted..!"
+                 });
+                } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
+                                    textColor: Colors.white);                   
+                }
+
+//...............................................................................................................
+
+
             growableList.clear();
 //..............................................................................................            
             Navigator.of(context).pop();  
@@ -1171,6 +1371,8 @@ return Future.value(false);
                     padding: EdgeInsets.only(left: 14,right: 14,top: 10,bottom: 10),
                     child: Align(
                       alignment: (snapshot.data.docs[index]["id"] != user!.email! ? Alignment.topLeft : Alignment.topRight),
+                      child: Material(elevation: 7,
+                      borderRadius: BorderRadius.circular(20),
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(20),
@@ -1317,22 +1519,25 @@ return Future.value(false);
                             //   'isPause': true
                             // });
                           setState(() {
-                            isPause == true;
+                            isPause = true;
                           });
 
-                            assetsAudioPlayer.pause();
+                          assetsAudioPlayer.pause();
+
                           } else {
 
                             // FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
                             // .collection(Globalid).doc(snapshot.data.docs[index].id).update({
                             //   'isPause': false
                             // });
+
                          setState(() {
-                            isPause == false;
+                            isPause = false;
                           });
 
 
-                            assetsAudioPlayer.play();
+                          assetsAudioPlayer.play();
+
                           }
                         }, 
                         icon: Icon(isPause == true ? Icons.play_circle_outline : Icons.pause_circle_outline, color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, size: 30,))
@@ -1432,7 +1637,7 @@ return Future.value(false);
 
                         ],)
                       ),
-       ))),
+       )))),
                   // CircleAvatar(
                   //   child:
                   SizedBox(width: 10,),  
@@ -1557,6 +1762,16 @@ return Future.value(false);
 
           }, 
           icon: //cat != 2 ? 
+          Icon( _playAudio == true ? CupertinoIcons.stop_circle : CupertinoIcons.mic_solid, color: Theme.of(context).hintColor,),
+
+          ),
+
+          SizedBox(width: 5,),
+
+          IconButton(onPressed: (){
+
+          }, 
+          icon: //cat != 2 ? 
           Icon(FontAwesomeIcons.upload, color: Theme.of(context).hintColor,)
 
           ),
@@ -1581,7 +1796,6 @@ return Future.value(false);
                   fontFamily: 'BrandonLI'
                   ),
                   hintText: 'Type down your message',
-                  prefixIcon: Icon(Icons.person),
                   border: UnderlineInputBorder(),
                 ),
               ),
@@ -1727,7 +1941,7 @@ return Future.value(false);
           SizedBox(width: 1,),
 //.........................................................................................................          
 
-          IconButton(onPressed: () async{
+          isAudioLoading != true ? IconButton(onPressed: () async{
             setState(() {
               isShowSticker = false;
             });
@@ -1736,9 +1950,12 @@ return Future.value(false);
            //startRecording();
 
           }, 
-          icon: Icon(_playAudio == true ? CupertinoIcons.stop_circle : CupertinoIcons.mic_solid, color: Theme.of(context).hintColor,)),
+          icon: Icon( _playAudio == true ? CupertinoIcons.stop_circle : CupertinoIcons.mic_solid, color: Theme.of(context).hintColor,))
+          
+          : CircularProgressIndicator(color: Theme.of(context).hintColor, /*value: progress,*/),
 
           SizedBox(width: 1,),
+
 //.........................................................................................................          
 
           IconButton(onPressed: () async {
@@ -1760,12 +1977,13 @@ return Future.value(false);
               height: 30,
               fit: BoxFit.fill
               ),)
-          : Text(pickfile!.name, textAlign: TextAlign.center,
+          : Text(photoname, textAlign: TextAlign.center,
           style:  TextStyle(fontFamily: 'BrandonLI',fontSize: 10, color: Colors.blueGrey,fontWeight: FontWeight.bold))
-          : CircularProgressIndicator(color: Theme.of(context).hintColor, /*value: progress,*/)
+          : task != null ? buildUploadStatus(task!) : CircularProgressIndicator(color: Colors.blueGrey,)
           ),
           
           SizedBox(width: 1,),
+
 //.........................................................................................................
 
               Expanded(child: 
@@ -1773,7 +1991,8 @@ return Future.value(false);
               constraints: BoxConstraints(maxHeight: 50),
               child:
                TextFormField(
-                enabled: _playAudio != true ? cat == 1 ? true : false : false,
+                enabled: _playAudio != true || isloading != true || isAudioLoading != true 
+                ? cat == 1 ? true : false : false,
                 controller: messageController,
                 keyboardType: TextInputType.multiline,
                 maxLines: null,
@@ -1788,15 +2007,24 @@ return Future.value(false);
                   color: Theme.of(context).hintColor,
                   fontFamily: 'BrandonLI'
                   ),
-                  hintText: _playAudio != true ? cat == 1? 'Type down your message' : 'Tap here cancel media select' : 'Tap here cancel recording' ,
+                  hintText: _playAudio != true || isloading != true || isAudioLoading != true 
+                  ? cat == 1
+                  ? 'Type down your message' 
+                  : 'Tap here cancel media upload' 
+                  : 'Tap here cancel recording upload' ,
                   border: UnderlineInputBorder(),
                 ),
               )),
               onTap: () async{
-                if (_playAudio != true) {
 
+
+                if (_playAudio != true) {
                   setState(() {
                     cat = 1;
+                    isShowSticker = false;
+                isloading == true || isAudioLoading == true 
+                ? uploadCanceled = true 
+                : uploadCanceled = false; 
                   });
 
                 } else {
@@ -1804,9 +2032,13 @@ return Future.value(false);
                 _recordingSession.closeAudioSession();
 
                   setState(() {
+                    cat = 1;
+                    isShowSticker = false;
                     _playAudio = false;
+                isloading == true || isAudioLoading == true 
+                ? uploadCanceled = true 
+                : uploadCanceled = false; 
                   });
-
                //File file = File(pathToAudio);
                
                await _recordingSession.stopRecorder();
@@ -1906,6 +2138,38 @@ return Future.value(false);
                           textColor: Colors.white); 
                       }   
 
+//for home page.............................................................................                                         
+                try {
+                 FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
+                 .doc(widget.id).update({
+                  'msg': message
+                 });
+                } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
+                                    textColor: Colors.white);                   
+                }
+//...............................................................................................................
+
+                try {
+                 FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("friends")
+                 .doc(user!.email!).update({
+                  'msg': message
+                 });
+                } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
+                                    textColor: Colors.white);                   
+                }
+
+//...............................................................................................................
+
 
                 setState(() {
                   cat = 1;
@@ -1959,8 +2223,120 @@ return Future.value(false);
 
   }
 
+//For rec...................................................................................................
+
+ShowbottomsheetRec (context, Stream<RecordingDisposition>? recordingTime){
+      showCupertinoModalPopup<void>(
+              context: context,
+              builder: (context) => StatefulBuilder(
+              builder: (context, state)
+              { 
+              return Padding(padding: EdgeInsets.only(bottom: 100, left: 20, right: 20),
+              child: Material(elevation: 20,
+              shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(100.0),
+                ),
+              color: Theme.of(context).scaffoldBackgroundColor,
+              child: Container(
+                decoration: BoxDecoration(              
+                borderRadius: BorderRadius.circular(100.0),               
+                color: Theme.of(context).scaffoldBackgroundColor,
+                ),
+                height: 50,
+                width: 210,
+                child: 
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+//.........................................................................................................
+
+          IconButton(onPressed: () async {
+            
+            Navigator.pop(context);
+            stopRecording();
+
+          }, 
+          icon: 
+          Icon(CupertinoIcons.stop_circle, color: Theme.of(context).hintColor, size: 30,)
+
+          ),
+//.........................................................................................................
+          
+          SizedBox(width: 1,),
+
+
+          IconButton(onPressed: () async {
+            if (isRecPause == true) {
+              setState(() {
+
+                state((){
+
+                isRecPause = false;
+
+                });
+
+              });
+
+              _recordingSession.resumeRecorder();
+            } else  {
+
+              setState(() {
+
+                state((){
+
+                isRecPause = true;
+
+                });
+
+              });
+
+              _recordingSession.pauseRecorder();
+
+            }                    
+          }, 
+          icon: 
+          //cat != 2 ? 
+          Icon(isRecPause == true ?  CupertinoIcons.play_circle : CupertinoIcons.pause_circle, color: Theme.of(context).hintColor, size: 30,)
+
+          ),
+
+          SizedBox(width: 10,),
+          StreamBuilder<RecordingDisposition>(
+          stream: _recordingSession.onProgress,
+          builder: (context, snapshot){
+            String formatDuration(Duration duration) {
+              String hours = duration.inHours.toString().padLeft(0, '2');
+              String minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+              String seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+              return "$hours:$minutes:$seconds";
+            } 
+            final duration = snapshot.hasData 
+            ? snapshot.data!.duration
+            : Duration.zero;
+            return Text('${formatDuration(duration)}',
+            style: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,));
+          }
+        ),
+          //Text(_timerText, style: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,)),
+              ],
+          ),
+
+          // SizedBox(height: 10,),
+
+          // ],),
+
+        )),
+        );
+        }));
+
+        
+}
+
+
+//file select...........................................................................................................
+
 Showbottomsheet (context){
-          _playAudio != true ?
           showCupertinoModalPopup<void>(
               context: context,
               builder: (context) => Padding(padding: EdgeInsets.only(bottom: 70, left: 20, right: 20),
@@ -2011,7 +2387,9 @@ Showbottomsheet (context){
           Icon(CupertinoIcons.photo, color: Colors.white, size: 40,)
 
           ))),
+
 //.........................................................................................................
+          
           SizedBox(width: 5,),
 
           CircleAvatar(backgroundColor: Colors.blue[200],
@@ -2050,82 +2428,10 @@ Showbottomsheet (context){
 
           ],),
 
-        )),))
-//...........................................................................................................
-      : showCupertinoModalPopup<void>(
-              context: context,
-              builder: (context) => Padding(padding: EdgeInsets.only(bottom: 100, left: 20, right: 20),
-              child: Material(elevation: 20,
-              shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(100.0),
-                ),
-              color: Theme.of(context).scaffoldBackgroundColor,
-              child: Container(
-                decoration: BoxDecoration(              
-                borderRadius: BorderRadius.circular(100.0),               
-                color: Theme.of(context).scaffoldBackgroundColor,
-                ),
-                height: 50,
-                width: 210,
-                child: 
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-//.........................................................................................................
-
-          IconButton(onPressed: () async {
-            
-            stopRecording();
-
-            Navigator.pop(context);
-          }, 
-          icon: 
-          Icon(CupertinoIcons.stop_circle, color: Theme.of(context).hintColor, size: 30,)
-
-          ),
-//.........................................................................................................
-          SizedBox(width: 1,),
-
-
-          IconButton(onPressed: () async {
-                     
-            Navigator.pop(context);
-          }, 
-          icon: 
-          //cat != 2 ? 
-          Icon(CupertinoIcons.play_circle, color: Theme.of(context).hintColor, size: 30,)
-
-          ),
-
-          SizedBox(width: 10,),
-          StreamBuilder<RecordingDisposition>(
-          stream: _recordingSession.onProgress,
-          builder: (context, snapshot){
-            String formatDuration(Duration duration) {
-              String hours = duration.inHours.toString().padLeft(0, '2');
-              String minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-              String seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-              return "$hours:$minutes:$seconds";
-            } 
-            final duration = snapshot.hasData 
-            ? snapshot.data!.duration
-            :Duration.zero;
-            return Text('${formatDuration(duration)}',
-            style: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,));
-          }
-        ),
-          //Text(_timerText, style: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,)),
-              ],
-          ),
-
-          // SizedBox(height: 10,),
-
-          // ],),
-
         )),));
 
   }   
+
 //.........................................................................................................
 
   Widget buildSticker() {
@@ -2317,7 +2623,40 @@ onSendMessage(String sticker) async {
                                     gravity: ToastGravity.BOTTOM,  
                                     backgroundColor: Color.fromARGB(255, 248, 17, 0),  
                                     textColor: Colors.white); 
-                                    }                                      
+                                    }   
+//for home page.............................................................................                                         
+                try {
+                 FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
+                 .doc(widget.id).update({
+                  'msg': sticker
+                 });
+                } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
+                                    textColor: Colors.white);                   
+                }
+//...............................................................................................................
+
+                try {
+                 FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("friends")
+                 .doc(user!.email!).update({
+                  'msg': sticker
+                 });
+                } catch(e){
+                                    Fluttertoast.showToast(  
+                                    msg: 'An error occured..!',  
+                                    toastLength: Toast.LENGTH_LONG,  
+                                    gravity: ToastGravity.BOTTOM,  
+                                    backgroundColor: Color.fromARGB(255, 248, 17, 0),  
+                                    textColor: Colors.white);                   
+                }
+
+//...............................................................................................................
+
+
                 setState(() {
                         reply = ValueNotifier<bool>(false);
                         replyMsg = "";
@@ -2333,40 +2672,9 @@ String replyMsg = "";
 int category = 0;
 bool isImage = true; 
 ScrollController scrollController = ScrollController();
-String photoname = "";
+String photoname = "no media";
 final growableList = <String>[];
 
-
-//CHAT1.........................................................................................................
-// class chat1 extends StatefulWidget {
-//   chat1({Key? key}) : super(key: key);
-
-//   @override
-//   _chat1State createState() => _chat1State();
-// }
-
-
-//class _chat1State extends State<chat1> {
-
-
-
-// void initState(){
-//   super.initState();
-//   WidgetsBinding.instance?.addPostFrameCallback((_){
-//   scrollController.jumpTo(scrollController.position.maxScrollExtent);
-//   });
-// }
-
-  // @override
-  // Widget build(BuildContext context) {
-
-
-
-
-
-//   }
-  
-// }
 
 
 //PhotoView for profile............................................................................................
@@ -2388,24 +2696,7 @@ class photoViewState extends State<photoView>{
   Widget build(BuildContext context) {
   return Scaffold(
   appBar: AppBar(
-        // actions: [
-        //   progress != null ? Container(width:80,padding: EdgeInsets.only(right: 20, left: 10),
-        //   child: Center(child:
-        //   CircularProgressIndicator(value: progress,color: Colors.blueGrey,
-        //   backgroundColor: Color.fromARGB(202, 96, 125, 139),)))
 
-        //   : IconButton(
-        //     icon:  Icon(
-        //       Icons.download,
-        //       color: Colors.white, // Change Custom Drawer Icon Color
-        //     ),
-        //     onPressed: () {
-        //         Permission.storage.request();
-        //         Permission.accessMediaLocation;
-        //         Permission.manageExternalStorage;
-        //         downloadFile(widget.url, widget.date);             
-        //   },),          
-        // ],
         backgroundColor: Colors.black,    
         leading: IconButton(
               icon:  Icon(
@@ -2437,28 +2728,7 @@ class photoViewState extends State<photoView>{
   ); 
       
   }
-    // Future downloadFile(String url, String name) async {
 
-    //    Directory tempDir = await getApplicationDocumentsDirectory();
-    //    String path = '/storage/emulated/0/Download/${name}.jpeg';
-
-
-
-
-    //   await Dio().download(url, path,
-    //   onReceiveProgress: (received, total){
-    //     double progress1 = received/ total;
-    //     print(path);
-    //     print(url);
-    //     setState(() {
-    //       //progress = progress1;
-    //     });
-    //   });
-
-    // print(path);
-    // OpenFile.open(path, type: "image/jpeg");
-
-    // }
 
 }
 
@@ -2513,7 +2783,7 @@ class PhotoView2State extends State<PhotoView2>{
                 Permission.manageExternalStorage;
 
                 Directory tempDir = await getApplicationDocumentsDirectory();
-                String path = '/storage/emulated/0/Download/${widget.name}';
+                String path = '/sdcard/MacsApp/${widget.name}';
 
                 await Dio().download(widget.url, path,
                 onReceiveProgress: (received, total){

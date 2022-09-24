@@ -106,6 +106,7 @@ class RequestsState extends State<Requests>{
                         'img': snapshot.data.docs[index]['Requestimg'],
                         'email': snapshot.data.docs[index]['Requestemail'],
                         'id': snapshot.data.docs[index]['Requestemail'],
+                        'msg': "No message..!"
                       });
 
                       await FirebaseFirestore.instance.collection("Users").doc(snapshot.data.docs[index]['Requestemail']).collection("friends")
@@ -114,7 +115,8 @@ class RequestsState extends State<Requests>{
                         'about': widget.about,
                         'img': widget.img,
                         'email': user!.email!,   
-                        'id': user!.email!,                 
+                        'id': user!.email!, 
+                        'msg': "No message..!"                
                       });  
 
                       FirebaseFirestore.instance.collection("Users").doc(user!.email!)

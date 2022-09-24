@@ -326,10 +326,26 @@ if (isOnline == true){
                           color: Theme.of(context).hintColor,
                           fontSize: 20,
                         ),),
-                      subtitle: Text(snapshot.data['about'],style:  TextStyle(fontFamily: 'BrandonLI',
+                      subtitle: StreamBuilder(
+                      stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
+                      .doc(snapshot.data['email']).snapshots(),
+                      builder: (BuildContext context, AsyncSnapshot<dynamic> snapshot) {
+                        if (!snapshot.hasData) {   
+                        return Text("No new message..!",style:  TextStyle(fontFamily: 'BrandonL',
                           color: Theme.of(context).hintColor,
                           fontSize: 15,
-                        ),),  
+                        ),);
+                        }
+
+                      else {
+                        return SizedBox(width: 50, height: 20,
+                        child:
+                        Text(snapshot.data['msg'], style: TextStyle(fontFamily: 'BrandonLI',
+                          color: Theme.of(context).hintColor,
+                          fontSize: 15,
+                        ),));                        
+                      }
+                      }),
                      trailing: snapshot.data['showOnline'] == true ?
                      Text(snapshot.data['isOnline'] == true ? "online" : "offline", 
                      style:  TextStyle(fontFamily: 'BrandonLI',
