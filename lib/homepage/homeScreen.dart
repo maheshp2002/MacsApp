@@ -355,7 +355,7 @@ if (isOnline == true){
 
                       leading: InkWell(
                       onTap: () => Navigator.push(context, MaterialPageRoute(
-                      builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name']))),
+                      builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['about']))),
                       child:  
 
                       ClipRRect(

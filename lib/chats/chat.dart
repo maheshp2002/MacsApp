@@ -52,9 +52,10 @@ class chatState extends State<chat> {
   bool isBottomSheet = false;
   bool isPause = false;
   bool uploadCanceled = false;
+  bool isRecorderReady = false;
   
   //recording audio
-  late FlutterSoundRecorder _recordingSession;
+  final recordingSession = FlutterSoundRecorder();
   //create a new player
   final assetsAudioPlayer = AssetsAudioPlayer();
   //late String pathToAudio;
@@ -87,16 +88,15 @@ class chatState extends State<chat> {
   }  
 
 //initialize...........................................................................................................
-  void initializer() async {
+  Future initializer() async {
     //pathToAudio = '/sdcard/Download/audio${DateTime.now()}.wav';
-    _recordingSession = FlutterSoundRecorder();
-    await _recordingSession.openAudioSession(
+    await recordingSession.openAudioSession(
         focus: AudioFocus.requestFocusAndStopOthers,
         category: SessionCategory.playAndRecord,
         mode: SessionMode.modeDefault,
         device: AudioDevice.speaker);
-    await _recordingSession.setSubscriptionDuration(Duration(
-    milliseconds: 10));
+    isRecorderReady = true;
+    recordingSession.setSubscriptionDuration(const Duration(milliseconds: 500));
     await initializeDateFormatting();
     await Permission.microphone.request();
     await Permission.storage.request();
@@ -161,6 +161,8 @@ class chatState extends State<chat> {
  
   Future<void> startRecording() async {
 
+    if(!isRecorderReady) return;
+
     setState(() {
       _playAudio = true;
     });
@@ -169,14 +171,14 @@ class chatState extends State<chat> {
     if (!directory.existsSync()) {
       directory.createSync();
     }
-    _recordingSession.openAudioSession();
-    await _recordingSession.startRecorder(
+    recordingSession.openAudioSession();
+    await recordingSession.startRecorder(
       toFile: completePath,
       codec: Codec.pcm16WAV,
     );
 
     // StreamSubscription _recorderSubscription =
-    //   _recordingSession.onProgress!.listen((e) {
+    //   recordingSession.onProgress!.listen((e) {
     //   var date = DateTime.fromMillisecondsSinceEpoch(
     //   e.duration.inMilliseconds,
     //       isUtc: true);
@@ -187,14 +189,17 @@ class chatState extends State<chat> {
     // });
     //_recorderSubscription.cancel();
 
-    ShowbottomsheetRec(context, _recordingSession.onProgress);
+    ShowbottomsheetRec(context, recordingSession.onProgress);
   }
 
  
 //stop record...........................................................................................................
  
   Future<String?> stopRecording() async {
-    _recordingSession.closeAudioSession();
+    
+    if(!isRecorderReady) {print("null");};
+
+    recordingSession.closeAudioSession();
     setState(() {
       _playAudio = false;
       isAudioLoading = true;
@@ -205,7 +210,7 @@ class chatState extends State<chat> {
 
     saveAudio(file, fileName);
 
-    return await _recordingSession.stopRecorder();
+    return await recordingSession.stopRecorder();
   }
 
 // //Play audio preview...........................................................................................................
@@ -328,6 +333,7 @@ class chatState extends State<chat> {
   @override
   void dispose() {
     scrollController.removeListener(() {});
+    recordingSession.closeAudioSession();
     super.dispose();
   }
 
@@ -1243,7 +1249,7 @@ return Future.value(false);
         Row(children: [
         InkWell(
         onTap: () => Navigator.push(context, MaterialPageRoute(
-        builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name']))),
+        builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['about']))),
         child:  ClipRRect(
          borderRadius: BorderRadius.circular(100),child: 
          Image.network(snapshot.data['img'], width: 40, height: 40, fit: BoxFit.fill,
@@ -2029,7 +2035,7 @@ return Future.value(false);
 
                 } else {
 
-                _recordingSession.closeAudioSession();
+                recordingSession.closeAudioSession();
 
                   setState(() {
                     cat = 1;
@@ -2041,7 +2047,9 @@ return Future.value(false);
                   });
                //File file = File(pathToAudio);
                
-               await _recordingSession.stopRecorder();
+               if(!isRecorderReady) return;
+
+               await recordingSession.stopRecorder();
 
                 }
               }
@@ -2278,7 +2286,7 @@ ShowbottomsheetRec (context, Stream<RecordingDisposition>? recordingTime){
 
               });
 
-              _recordingSession.resumeRecorder();
+              recordingSession.resumeRecorder();
             } else  {
 
               setState(() {
@@ -2291,7 +2299,7 @@ ShowbottomsheetRec (context, Stream<RecordingDisposition>? recordingTime){
 
               });
 
-              _recordingSession.pauseRecorder();
+              recordingSession.pauseRecorder();
 
             }                    
           }, 
@@ -2303,7 +2311,7 @@ ShowbottomsheetRec (context, Stream<RecordingDisposition>? recordingTime){
 
           SizedBox(width: 10,),
           StreamBuilder<RecordingDisposition>(
-          stream: _recordingSession.onProgress,
+          stream: recordingSession.onProgress,
           builder: (context, snapshot){
             String formatDuration(Duration duration) {
               String hours = duration.inHours.toString().padLeft(0, '2');
