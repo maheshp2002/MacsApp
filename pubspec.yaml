@@ -67,6 +67,7 @@ dependencies:
   jitsi_meet: ^4.0.0
   assets_audio_player: ^3.0.5  
   flutter_sound_lite: ^8.5.0
+  animated_text_kit: ^4.2.1 #wave text
 
 
 dev_dependencies:

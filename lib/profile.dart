@@ -6,7 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:macsapp/chats/chat.dart';
-import 'package:macsapp/homepage/homeScreen.dart';
+//import 'package:macsapp/homepage/homeScreen.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
@@ -132,7 +132,7 @@ SizedBox(height: 10,),
               GestureDetector(
               onLongPress: () {
                 Navigator.push(context, MaterialPageRoute(
-                builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name'],)));
+                builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name'], about: snapshot.data["about"],)));
               },
               onTap: () {                
                 getImage(true);

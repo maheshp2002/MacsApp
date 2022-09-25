@@ -310,7 +310,7 @@ if (isOnline == true){
                         ),),                       
                       leading: InkWell(
                       onTap: () => Navigator.push(context, MaterialPageRoute(
-                      builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name']))),
+                      builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name'], about: snapshot.data["about"],))),
                       child:  
 
                       ClipRRect(
@@ -355,7 +355,7 @@ if (isOnline == true){
 
                       leading: InkWell(
                       onTap: () => Navigator.push(context, MaterialPageRoute(
-                      builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['about']))),
+                      builder: (context)=> photoView(url: snapshot.data['img'], date: snapshot.data['name'], about: snapshot.data["about"],))),
                       child:  
 
                       ClipRRect(
@@ -768,7 +768,7 @@ class UsersListState extends State<UsersList>{
                       ),),
                       onTap: () {
                       Navigator.push(context, MaterialPageRoute(
-                      builder: (context)=> photoView(url: snapshot.data.docs[index]['img'], date: snapshot.data.docs[index]['name'])));                        
+                      builder: (context)=> photoView(url: snapshot.data.docs[index]['img'], date: snapshot.data.docs[index]['name'], about: snapshot.data.docs[index]["about"],)));                        
                       },
                       ),
                       trailing: ElevatedButton(
@@ -927,7 +927,7 @@ class _SearchFeedState extends State<SearchFeed> {
                       )),
                       onTap: () {
                       Navigator.push(context, MaterialPageRoute(
-                      builder: (context)=> photoView(url: data.img, date: data.name)));                        
+                      builder: (context)=> photoView(url: data.img, date: data.name, about: data.about,)));                        
                       },
                       ),
                       trailing: ElevatedButton(
