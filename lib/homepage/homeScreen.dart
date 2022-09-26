@@ -290,8 +290,6 @@ if (isOnline == true){
 
                         Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => 
                         chat(id: snapshot.data.docs[index]['id'], online: isOnline,)));
-                       //print("###############################################################################");
-                       //print(snapshot.data.docs[index]['id']);
                       },                       
                     child: StreamBuilder(
                     stream: FirebaseFirestore.instance.collection("Users").doc(snapshot.data.docs[index]['email'])
@@ -340,10 +338,13 @@ if (isOnline == true){
                       else {
                         return SizedBox(width: 50, height: 20,
                         child:
+                        Row(children: [
+                        Icon(Icons.circle, color: snapshot.data['color'] ? Colors.green : Theme.of(context).hintColor, size: 10,),
+                        SizedBox(width: 3,),
                         Text(snapshot.data['msg'], style: TextStyle(fontFamily: 'BrandonLI',
                           color: Theme.of(context).hintColor,
                           fontSize: 15,
-                        ),));                        
+                        ),)],));                        
                       }
                       }),
                      trailing: snapshot.data['showOnline'] == true ?

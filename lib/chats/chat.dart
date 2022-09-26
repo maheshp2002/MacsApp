@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_sound_lite/flutter_sound.dart';
@@ -52,15 +51,18 @@ class chatState extends State<chat> {
   bool isBottomSheet = false;
   bool isPause = false;
   bool isRecorderReady = false;
+  //bool isSelected = false;
   
   //recording audio
+  Timer? _timer;
+  int _recordDuration = 0;
   final recordingSession = FlutterSoundRecorder();
   //create a new player
   final assetsAudioPlayer = AssetsAudioPlayer();
-  //late String pathToAudio;
+  var counterStream =
+    Stream<int>.periodic(const Duration(seconds: 1), (x) => x).take(15);
   bool isRecPause = false;
   bool _playAudio = false;
-  Stream<RecordingDisposition>? recordingStream;
   double playbackSpeed = 1;
   Duration duration = Duration.zero;
   Duration position = Duration.zero;
@@ -84,7 +86,14 @@ class chatState extends State<chat> {
     handleScroll();
     chatView();
     initializer();
+    Future.delayed(Duration(seconds: 1), () async{
+      FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
+      .doc(widget.id).update({
+        'color': false
+      });
+    });
   }  
+
 
 //initialize...........................................................................................................
   Future initializer() async {
@@ -156,6 +165,10 @@ void _createDirectory() async {
     }
   
   }
+
+late StreamController<int> _controller;
+
+
 //start record...........................................................................................................
  
   Future<void> startRecording() async {
@@ -176,20 +189,13 @@ void _createDirectory() async {
       codec: Codec.pcm16WAV,
     );
 
-    StreamSubscription _recorderSubscription =
-      recordingSession.onProgress!.listen((e) {
-      var date = DateTime.fromMillisecondsSinceEpoch(
-      e.duration.inMilliseconds,
-          isUtc: true);
-      var timeText = DateFormat('mm:ss:SS', 'en_GB').format(date);
-    });
-    _recorderSubscription.cancel();
 
-    setState(() {
-      recordingStream = recordingSession.onProgress;
-    });
+    _recordDuration = 0;
+    _startTimer();
+    _controller = StreamController<int>();
     Showbottomsheet(context);
   }
+
 
  
 //stop record...........................................................................................................
@@ -197,11 +203,14 @@ void _createDirectory() async {
   Future<String?> stopRecording() async {
     
     if(!isRecorderReady) {print("null");};
-
+     _controller.close();
+    _timer?.cancel();
+    _recordDuration = 0;
     recordingSession.closeAudioSession();
     setState(() {
       _playAudio = false;
       isAudioLoading = true;
+      isPause = false;
     });
     File file = File(completePath);
 
@@ -222,7 +231,7 @@ void _createDirectory() async {
 //   }
 
 //Play audio network...........................................................................................................
- 
+
   Future<void> playFuncNetwork(String url, artist, title, id) async {
 
 
@@ -331,8 +340,15 @@ void _createDirectory() async {
 
   @override
   void dispose() {
+    _timer?.cancel();
     scrollController.removeListener(() {});
     recordingSession.closeAudioSession();
+    Future.delayed(Duration(seconds: 1), () async{
+      FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
+      .doc(widget.id).update({
+        'color': false
+      });
+    });
     super.dispose();
   }
 
@@ -457,7 +473,8 @@ Future<String> uploadFile(_image) async {
                 try {
                  FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
                  .doc(widget.id).update({
-                  'msg': photoname
+                  'msg': photoname,
+                  'color': true
                  });
                 } catch(e){
                                     Fluttertoast.showToast(  
@@ -472,7 +489,8 @@ Future<String> uploadFile(_image) async {
                 try {
                  FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("friends")
                  .doc(user!.email!).update({
-                  'msg': photoname
+                  'msg': photoname,
+                  'color': true
                  });
                 } catch(e){
                                     Fluttertoast.showToast(  
@@ -585,7 +603,8 @@ Future<String> uploadFile(_image) async {
                 try {
                  FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
                  .doc(widget.id).update({
-                  'msg': fileName
+                  'msg': fileName,
+                  'color': true
                  });
                 } catch(e){
                                     Fluttertoast.showToast(  
@@ -600,7 +619,8 @@ Future<String> uploadFile(_image) async {
                 try {
                  FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("friends")
                  .doc(user!.email!).update({
-                  'msg': fileName
+                  'msg': fileName,
+                  'color': true
                  });
                 } catch(e){
                                     Fluttertoast.showToast(  
@@ -713,14 +733,14 @@ Widget buildUploadStatusAudio(UploadTask? task) => StreamBuilder<TaskSnapshot>(
     return Stack(
           children: <Widget>[
           Center(child:
-          CircularProgressIndicator(value: progress , color: Color.fromARGB(255, 0, 255, 8),
-          backgroundColor: Color.fromARGB(61, 0, 255, 8),)),
+          CircularProgressIndicator(value: progress , color: Color.fromARGB(255, 72, 255, 0),
+          backgroundColor: Color.fromARGB(60, 115, 255, 0),)),
           
           Center(child:Padding(padding: EdgeInsets.only(top: 10, left: 7),
           child:
           Text(percentage + "%", textAlign: TextAlign.end,
           style: TextStyle(
-            color: Color.fromARGB(213, 0, 255, 8),
+            color: Color.fromARGB(255, 72, 255, 0),
             fontFamily: 'BrandonL',
             fontSize: 10,
           ),))),
@@ -970,7 +990,8 @@ selectedItem() async{
                 try {
                  FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
                  .doc(widget.id).update({
-                  'msg': "This message has been deleted..!"
+                  'msg': "This message has been deleted..!",
+                  'color': true
                  });
                 } catch(e){
                                     Fluttertoast.showToast(  
@@ -985,7 +1006,8 @@ selectedItem() async{
                 try {
                  FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("friends")
                  .doc(user!.email!).update({
-                  'msg': "This message has been deleted..!"
+                  'msg': "This message has been deleted..!",
+                  'color': true
                  });
                 } catch(e){
                                     Fluttertoast.showToast(  
@@ -1494,7 +1516,9 @@ return Future.value(false);
 
                         snapshot.data.docs[index]["cat"] == 1 ? 
                         InkWell(
-                        onTap: () => _sticker(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["sticker"]),
+                        onTap: () => growableList.isEmpty
+                        ? _sticker(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["sticker"])
+                        : "",
                         child:                         
                         Image.asset("assets/sticker/" + snapshot.data.docs[index]["sticker"] + ".gif", width: 80, height: 80,))
 
@@ -1527,12 +1551,16 @@ return Future.value(false);
                         
                         : snapshot.data.docs[index]["cat"] == 3 ? 
                         InkWell(
-                        onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["msg"]),
+                        onTap: () => growableList.isEmpty
+                        ? _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["msg"])
+                        : "",
                         child:                          
                         Text(snapshot.data.docs[index]["msg"], style: TextStyle(color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, fontSize: 15,fontFamily: 'BrandonBI'),))
 
                         : InkWell(
-                        onTap: () => _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["audioname"]),
+                        onTap: () => growableList.isEmpty
+                        ? _messageView(snapshot.data.docs[index]["date"], snapshot.data.docs[index]["audioname"])
+                        : "",
                         child: Row(
                         children: [   
 
@@ -1781,7 +1809,9 @@ return Future.value(false);
                   isShowSticker ? buildSticker() : SizedBox.shrink(),
 
       Align(alignment: Alignment.bottomCenter,
-      child: 
+      child: Material(elevation: 20,
+      type: MaterialType.card,
+      child:
       StreamBuilder(
       stream: FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
       .collection(widget.id).snapshots(),
@@ -1851,10 +1881,10 @@ return Future.value(false);
 
       else{
         return Container(
-        decoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(width: 1.0, color: Theme.of(context).hintColor),
-          )),
+        //decoration: BoxDecoration(
+          //border: Border(
+          // // top: BorderSide(width: 1.0, color: Theme.of(context).hintColor),
+          //)),
         child:
         Column( mainAxisSize: MainAxisSize.min,
         children: [ 
@@ -2078,10 +2108,14 @@ return Future.value(false);
 
                   setState(() {
                     _playAudio = false;
+                    isPause = false;
                   });
                   
-                  if(!isRecorderReady) return;
+                  _timer?.cancel();
+                  _recordDuration = 0;
 
+                  if(!isRecorderReady) return;
+                   _controller.close();
                   await recordingSession.stopRecorder();
 
                 } 
@@ -2183,7 +2217,8 @@ return Future.value(false);
                 try {
                  FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
                  .doc(widget.id).update({
-                  'msg': message
+                  'msg': message,
+                  'color': true
                  });
                 } catch(e){
                                     Fluttertoast.showToast(  
@@ -2198,7 +2233,8 @@ return Future.value(false);
                 try {
                  FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("friends")
                  .doc(user!.email!).update({
-                  'msg': message
+                  'msg': message,
+                  'color': true
                  });
                 } catch(e){
                                     Fluttertoast.showToast(  
@@ -2248,7 +2284,7 @@ return Future.value(false);
         SizedBox(height: 10,)
          ]));
     
-      }}))
+      }})))
                 ],
               ),
 
@@ -2262,6 +2298,46 @@ return Future.value(false);
 
     ));
 
+  }
+
+  Widget _buildText() {
+    if (_playAudio) {
+      return _buildTimer();
+    }
+
+    return const Text(".....");
+  }
+
+  Widget _buildTimer() {
+    final String hours = _formatNumber(_recordDuration ~/ 60);
+    final String minutes = _formatNumber(_recordDuration ~/ 60);
+    final String seconds = _formatNumber(_recordDuration % 60);
+
+    return Text(
+      '$hours : $minutes : $seconds',
+      style: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,),
+    );
+  }
+
+  String _formatNumber(int number) {
+    String numberStr = number.toString();
+    if (number < 10) {
+      numberStr = '0' + numberStr;
+    }
+
+    return numberStr;
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    int _counter = 1;
+    _timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
+      setState(() => _recordDuration++,);
+      setState(() {
+        _controller.sink.add(_counter+1);
+      });
+      
+    });
   }
 
 
@@ -2413,7 +2489,7 @@ Showbottomsheet (context){
                 });
 
               });
-
+              _startTimer();
               recordingSession.resumeRecorder();
             } else  {
 
@@ -2426,7 +2502,7 @@ Showbottomsheet (context){
                 });
 
               });
-
+              _timer?.cancel();
               recordingSession.pauseRecorder();
 
             }                    
@@ -2437,49 +2513,33 @@ Showbottomsheet (context){
 
           ),
 
-          SizedBox(width: 10,),
-          StreamBuilder<RecordingDisposition>(
-          stream: recordingStream,
+          SizedBox(width: 1,),
+          StreamBuilder<int>(
+          stream: _controller.stream,
           builder: (context, snapshot){
-            if (snapshot.hasData ){
-            String formatDuration(Duration duration) {
-              String hours = duration.inHours.toString().padLeft(0, '2');
-              String minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
-              String seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
-              return "$hours:$minutes:$seconds";
-            } 
-            final duration = snapshot.data!.duration;
-            Duration.zero;
-            return Text('${formatDuration(duration)}',
-            style: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,));
-          }
-          return Container(
-          height: 18,
-           child: Center(child:
-           AnimatedTextKit(
-            animatedTexts: [
-            WavyAnimatedText('Recording...',
-            textStyle: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,),
-            textAlign: TextAlign.center,
-            speed: const Duration(milliseconds: 500)
-            ),
-            WavyAnimatedText('Recording...',
-            textStyle: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,),
-            speed: const Duration(milliseconds: 500)
-            ),],
-            isRepeatingAnimation: true,
-            repeatForever: true,
-            )));
-           //Text();
+             if (snapshot.hasData ){
+            // String formatDuration(Duration duration) {
+            //   String hours = duration.inHours.toString().padLeft(0, '2');
+            //   String minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+            //   String seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+            //   return "$hours:$minutes:$seconds";
+            // } 
+            // final duration = snapshot.data!.duration;
+            // Duration.zero;
+            // Text('${formatDuration(duration)}',
+            // style: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,));
+             return _buildText();
+           } if (!snapshot.hasData) {
+            return _buildText();
+           } else {
+            return _buildText();
+           }
+          
           }
         ),
-          //Text(_timerText, style: TextStyle( color: Theme.of(context).hintColor, fontFamily: 'BrandonLI', fontSize: 18,)),
               ],
           ),
 
-          // SizedBox(height: 10,),
-
-          // ],),
 
         )),
         );
@@ -2684,7 +2744,8 @@ onSendMessage(String sticker) async {
                 try {
                  FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("friends")
                  .doc(widget.id).update({
-                  'msg': sticker
+                  'msg': sticker,
+                  'color': true
                  });
                 } catch(e){
                                     Fluttertoast.showToast(  
@@ -2699,7 +2760,8 @@ onSendMessage(String sticker) async {
                 try {
                  FirebaseFirestore.instance.collection("Users").doc(widget.id).collection("friends")
                  .doc(user!.email!).update({
-                  'msg': sticker
+                  'msg': sticker,
+                  'color': true
                  });
                 } catch(e){
                                     Fluttertoast.showToast(  
@@ -2788,6 +2850,8 @@ class photoViewState extends State<photoView>{
       body: Container(
         color: Colors.black,
         child: Center(child: PhotoView(
+        minScale: PhotoViewComputedScale.contained * 0.8,
+        maxScale: PhotoViewComputedScale.covered * 2,
         imageProvider:
         NetworkImage(widget.url,))),
         ),
@@ -2893,6 +2957,8 @@ class PhotoView2State extends State<PhotoView2>{
 
         
         widget.isImage == true ? PhotoView(
+        minScale: PhotoViewComputedScale.contained * 0.8,
+        maxScale: PhotoViewComputedScale.covered * 2,
         imageProvider:
         NetworkImage(widget.url))
         : Column(mainAxisAlignment: MainAxisAlignment.center,
