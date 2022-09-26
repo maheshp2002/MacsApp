@@ -247,8 +247,8 @@ late StreamController<int> _controller;
             artist: artist,
             image: MetasImage.asset("assets/logo.png"),
           ),
-      playSpeed: playbackSpeed,
       ),
+      playSpeed: playbackSpeed,
       notificationSettings: NotificationSettings(
           nextEnabled: false,
           prevEnabled: false,
@@ -869,7 +869,7 @@ selectedItem() async{
 //..............................................................................................
               String imgUrl = "";
               String id = ""; //for saving to other collection with same doc id
-              Navigator.of(context).pop();  
+
               Fluttertoast.showToast(  
               msg: 'Deleting message may take a while...!\n Media will be deleted for both users..!',  
               toastLength: Toast.LENGTH_LONG,  
@@ -900,6 +900,7 @@ selectedItem() async{
 
                 } 
               growableList.clear();
+              Navigator.of(context).pop();  
             // print(widget.id);                
 //..............................................................................................            
 
