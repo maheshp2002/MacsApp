@@ -246,7 +246,7 @@ SizedBox(height: 10,),
 
               if (aboutController.text.trim().isEmpty)
               {
-                about = snapshot.data['name'];
+                about = snapshot.data['about'];
               } else {
                 about = aboutController.text.trim();
               }
