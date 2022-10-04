@@ -51,7 +51,7 @@ class chatState extends State<chat> {
   bool isBottomSheet = false;
   bool isPause = false;
   bool isRecorderReady = false;
-  //bool isSelected = false;
+  String currentPlayName = "";
   
   //recording audio
   Timer? _timer;
@@ -233,8 +233,15 @@ late StreamController<int> _controller;
 //Play audio network...........................................................................................................
 
   Future<void> playFuncNetwork(String url, artist, title, id) async {
-
-
+    try{
+      stopPlayFunc(id);
+    }catch(e){
+      debugPrint(e.toString());
+    }
+    
+    setState(() {
+      currentPlayName = url;
+    });
     FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
     .collection(Globalid).doc(id).update({
         'isPlaying': true
@@ -248,17 +255,24 @@ late StreamController<int> _controller;
             image: MetasImage.asset("assets/logo.png"),
           ),
       ),
+     // loopMode: LoopMode.single,
       playSpeed: playbackSpeed,
       notificationSettings: NotificationSettings(
           nextEnabled: false,
           prevEnabled: false,
           customStopAction: (AssetsAudioPlayer) async{
 
-          FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
-          .collection(Globalid).doc(id).update({
-              'isPlaying': false
-          });
+            setState(() {
+              currentPlayName = "";
+            });
+
+            FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
+            .collection(Globalid).doc(id).update({
+                'isPlaying': false
+            });
+
             assetsAudioPlayer.stop(); 
+
           }
       ),
       autoStart: true,
@@ -271,11 +285,19 @@ late StreamController<int> _controller;
 //stop play...........................................................................................................
  
   Future<void> stopPlayFunc(String id) async {
+    setState(() {
+      currentPlayName = "";
+    });
     FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
     .collection(Globalid).doc(id).update({
         'isPlaying': false
     });
+    
+    try{
     assetsAudioPlayer.stop();
+    }catch(e){
+      debugPrint(e.toString());
+    }
   }
 
 // //pause play...........................................................................................................
@@ -1576,9 +1598,9 @@ return Future.value(false);
                             playFuncNetwork(snapshot.data.docs[index]["photo"], snapshot.data.docs[index]["audioname"], snapshot.data.docs[index]["name"], snapshot.data.docs[index].id);
                           }
                         }, 
-                        icon: Icon(snapshot.data.docs[index]["isPlaying"]== true ? Icons.stop : Icons.play_arrow, color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, size: 30,)),
+                        icon: Icon(currentPlayName == snapshot.data.docs[index]["photo"] ? snapshot.data.docs[index]["isPlaying"]== true ? Icons.stop : Icons.play_arrow : Icons.play_arrow, color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, size: 30,)),
 
-                        snapshot.data.docs[index]["isPlaying"] == true ? IconButton(onPressed: () {
+                        currentPlayName == snapshot.data.docs[index]["photo"] ? snapshot.data.docs[index]["isPlaying"] == true ? IconButton(onPressed: () {
                           //if (snapshot.data.docs[index]["isPause"] == false){
                            if (isPause == false){
                             // FirebaseFirestore.instance.collection("Users").doc(user!.email!).collection("chat").doc("Users")
@@ -1608,6 +1630,7 @@ return Future.value(false);
                           }
                         }, 
                         icon: Icon(isPause == true ? Icons.play_circle_outline : Icons.pause_circle_outline, color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, size: 30,))
+                        : Text("") 
                         : Text(""),
                                                 
                         Flexible( 
@@ -1638,12 +1661,10 @@ return Future.value(false);
                         ))),
                         
                         snapshot.data.docs[index]["isPlaying"] != true ? SizedBox(width: 20) : Text(""),
+                      
+//slider..................................................................................................................
 
-                        snapshot.data.docs[index]["isPlaying"] != true ?
-                        Flexible(child: 
-                        Text(snapshot.data.docs[index]["audioname"], style: TextStyle(color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, fontSize: 15,fontFamily: 'BrandonBI'),))
-                        
-                        : Text(""),
+                        currentPlayName == snapshot.data.docs[index]["photo"] ?
 
                         snapshot.data.docs[index]["isPlaying"] == true ?
 
@@ -1687,7 +1708,11 @@ return Future.value(false);
 
                         ]))
 
-                      : Text("")
+                      : Flexible(child: 
+                        Text(snapshot.data.docs[index]["audioname"], style: TextStyle(color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, fontSize: 15,fontFamily: 'BrandonBI'),))
+                      
+                      : Flexible(child: 
+                        Text(snapshot.data.docs[index]["audioname"], style: TextStyle(color: snapshot.data.docs[index]["id"] != user!.email! ? Theme.of(context).hintColor : Colors.black54, fontSize: 15,fontFamily: 'BrandonBI'),))
                          
                       ],)),
                         

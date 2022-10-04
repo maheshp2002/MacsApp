@@ -274,11 +274,17 @@ if (isOnline == true){
                         await collectionReference.collection("Users").doc(snapshot.data.docs[index]['email']).get()
                         .then((snapshot) {
                           setState(() {
-                          Globalname = snapshot.get('name');  
+                          //Globalname = snapshot.get('name');  
                           isOnline = snapshot.get('isOnline');              
                           });
                         });
 
+                        await collectionReference.collection("Users").doc(user!.email!).get()
+                        .then((snapshot) {
+                          setState(() {
+                          Globalname = snapshot.get('name');  
+                          });
+                        });
                         setState(() {
                         Globalmail = snapshot.data.docs[index]['email'];
                         Globalid = snapshot.data.docs[index]['id'];

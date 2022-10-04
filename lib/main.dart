@@ -50,8 +50,7 @@ class MyAppState extends State<MyApp> {
         
     user =  FirebaseAuth.instance.currentUser ?? "notSigned";
     });
-    // print(user);
-    // print("#######################################");
+
     return user;}
 
 HideOnline () async{
@@ -59,6 +58,7 @@ HideOnline () async{
                             await FirebaseFirestore.instance.collection("Users").doc(user!.email!).get()
                             .then((snapshot) {
                                       showOnline = snapshot.get('showOnline');
+                                      Globalname = snapshot.get('name');
                                     });
                         }catch(e){
                           Fluttertoast.showToast(  
