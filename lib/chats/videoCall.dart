@@ -91,7 +91,7 @@ class _VideoCallState extends State<VideoCall> {
         primary: Colors.orange,
         ),
         child:Text(
-              "JOIN MEET",
+              "JOIN A MEET",
               style: TextStyle(
                 color: Colors.white60,
                 fontFamily: 'BrandonBI',
@@ -450,7 +450,7 @@ class _newMeetState extends State<newMeet> {
 
                 } else {
 
-                  _joinMeeting();
+                  _startMeeting();
 
                 }
                 
@@ -470,7 +470,7 @@ class _newMeetState extends State<newMeet> {
                         height: 72,
                         child: Center(
                           child: Text(
-                            "JOIN MEET",
+                            "START NEW MEET",
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 18,
@@ -506,7 +506,7 @@ class _newMeetState extends State<newMeet> {
     });
   }
 
-  _joinMeeting() async {
+  _startMeeting() async {
     String? serverUrl = serverText.text.trim().isEmpty ? null : serverText.text;
 
     // Enable or disable any feature flag here
@@ -974,7 +974,7 @@ class _existingMeetState extends State<existingMeet> {
                         height: 72,
                         child: Center(
                           child: Text(
-                            "START NEW MEET",
+                            "JOIN MEET",
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 18,
